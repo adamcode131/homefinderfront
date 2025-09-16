@@ -13,24 +13,39 @@ export default function AddProperty() {
     images: [],
   });
 
-  // Handle text inputs
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+  // Quartiers par ville
+  const quartiers = {
+    Casablanca: ['Maarif', 'Anfa', 'Ain Diab', 'Sidi Bernoussi', 'Derb Sultan'],
+    Rabat: ['Agdal', 'Hay Riad', 'Yacoub El Mansour', 'Medina'],
+    Marrakech: ['Gueliz', 'Hivernage', 'Medina', 'Sidi Youssef Ben Ali'],
+    Tanger: ['Malabata', 'Medina', 'Iberia', 'Marchan'],
+    Fes: ['Ville Nouvelle', 'Medina', 'Narjiss'],
+    Agadir: ['Talborjt', 'Founty', 'Hay Mohammadi'],
+    Meknes: ['Hamria', 'Ville Nouvelle', 'Medina'],
+    Oujda: ['Lazaret', 'Hay Al Qods', 'Medina'],
+    Kenitra: ['Ville Haute', 'Bir Rami', 'Medina'],
+    Tetouan: ['Medina', 'Mhannech', 'Martil'],
   };
 
-  // Handle purpose radio
+  // Handle inputs
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'ville' ? { quartier: '' } : {}), // reset quartier si ville change
+    }));
+  };
+
   const handlePurposeChange = e => {
     setForm(prev => ({
       ...prev,
       purpose: e.target.value,
-      // Reset prices when switching
       rent_price: '',
       sale_price: '',
     }));
   };
 
-  // Handle image upload
   const handleImageChange = e => {
     const files = Array.from(e.target.files);
     setForm(prev => ({
@@ -40,7 +55,6 @@ export default function AddProperty() {
     e.target.value = '';
   };
 
-  // Remove image
   const handleRemoveImage = idx => {
     setForm(prev => ({
       ...prev,
@@ -48,34 +62,33 @@ export default function AddProperty() {
     }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const ownerid = localStorage.getItem("ownerid");
+  const handleSubmit = async e => {
+    e.preventDefault();
+    const ownerid = localStorage.getItem('ownerid');
 
-  const formData = new FormData();
-  Object.keys(form).forEach((key) => {
-    if (key === "images") {
-      form.images.forEach((img) => formData.append("images[]", img));
-    } else {
-      formData.append(key, form[key]);
-    }
-  });
+    const formData = new FormData();
+    Object.keys(form).forEach(key => {
+      if (key === 'images') {
+        form.images.forEach(img => formData.append('images[]', img));
+      } else {
+        formData.append(key, form[key]);
+      }
+    });
 
     const response = await fetch(`http://localhost:8000/api/storeProperties/${ownerid}`, {
-      method: "POST",
+      method: 'POST',
       body: formData,
     });
 
     if (response.ok) {
       const data = await response.json();
-      alert("Property submitted!");
+      alert('Property submitted!');
       console.log(data);
     } else {
       const error = await response.text();
-      alert("Error submitting property: " + error);
+      alert('Error submitting property: ' + error);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center px-4 py-12">
@@ -86,6 +99,7 @@ const handleSubmit = async (e) => {
         <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-8">
           Add a Property
         </h2>
+
         {/* Title */}
         <div>
           <label className="block text-slate-700 font-medium mb-2" htmlFor="title">
@@ -102,74 +116,82 @@ const handleSubmit = async (e) => {
             placeholder="Ex: Modern Apartment"
           />
         </div>
+
         {/* Type */}
         <div>
           <label className="block text-slate-700 font-medium mb-2" htmlFor="type">
             Type
           </label>
-          <input
-            type="text"
+          <select
             name="type"
             id="type"
             value={form.type}
             onChange={handleChange}
             required
-            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white placeholder-slate-400"
-            placeholder="Ex: Apartment, Villa, Studio"
-          />
+            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white"
+          >
+            <option value="">-- Select Type --</option>
+            {['Appartement','Villa','Maison','Studio','Duplex','Terrain','Bureau','Local Commercial','Chambre'].map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
+
         {/* Ville */}
         <div>
           <label className="block text-slate-700 font-medium mb-2" htmlFor="ville">
             Ville
           </label>
-          <input
-            type="text"
+          <select
             name="ville"
             id="ville"
             value={form.ville}
             onChange={handleChange}
             required
-            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white placeholder-slate-400"
-            placeholder="Ex: Casablanca"
-          />
+            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white"
+          >
+            <option value="">-- Select City --</option>
+            {['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fes', 'Agadir', 'Meknes', 'Oujda', 'Kenitra', 'Tetouan'].map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
         </div>
+
         {/* Quartier */}
         <div>
           <label className="block text-slate-700 font-medium mb-2" htmlFor="quartier">
             Quartier
           </label>
-          <input
-            type="text"
+          <select
             name="quartier"
             id="quartier"
             value={form.quartier}
             onChange={handleChange}
             required
-            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white placeholder-slate-400"
-            placeholder="Ex: Gauthier"
-          />
+            disabled={!form.ville}
+            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            <option value="">-- Select Quartier --</option>
+            {form.ville && quartiers[form.ville]?.map(q => (
+              <option key={q} value={q}>{q}</option>
+            ))}
+          </select>
         </div>
+
         {/* Images Upload */}
         <div>
           <label className="block text-slate-700 font-medium mb-2">Photos</label>
           <div className="flex flex-wrap gap-4">
             {form.images.map((img, idx) => (
               <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-100 flex items-center justify-center">
-                <img
-                  src={URL.createObjectURL(img)}
-                  alt="property"
-                  className="object-cover w-full h-full"
-                />
+                <img src={URL.createObjectURL(img)} alt="property" className="object-cover w-full h-full" />
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(idx)}
                   className="absolute top-1 right-1 bg-white/80 rounded-full p-1 hover:bg-red-500 hover:text-white transition-colors"
                   title="Remove"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  ✕
                 </button>
               </div>
             ))}
@@ -185,8 +207,8 @@ const handleSubmit = async (e) => {
               />
             </label>
           </div>
-          <p className="text-xs text-slate-400 mt-2">You can upload multiple images.</p>
         </div>
+
         {/* Description */}
         <div>
           <label className="block text-slate-700 font-medium mb-2" htmlFor="description">
@@ -203,6 +225,7 @@ const handleSubmit = async (e) => {
             rows={4}
           />
         </div>
+
         {/* Purpose */}
         <div>
           <label className="block text-slate-700 font-medium mb-2">Purpose</label>
@@ -230,6 +253,7 @@ const handleSubmit = async (e) => {
               <span className="ml-2 text-slate-700 font-medium">Rent</span>
             </label>
           </div>
+
           {/* Price Input */}
           <div className="mt-4 flex items-center space-x-3">
             {form.purpose === 'rent' && (
@@ -259,11 +283,12 @@ const handleSubmit = async (e) => {
                   className="px-4 py-2 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white w-40"
                   placeholder="Sale price"
                 />
-                <span className="text-lg font-semibold text-blue-600">DH (paiement seul fois)</span>
+                <span className="text-lg font-semibold text-blue-600">DH (one time)</span>
               </>
             )}
           </div>
         </div>
+
         {/* Submit */}
         <button
           type="submit"
