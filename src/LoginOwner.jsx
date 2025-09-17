@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext"; // ✅ import AuthContext
+import { useAuth } from "./context/AuthContext";
 
 export default function LoginOwner() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ get login from AuthContext
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,7 +31,15 @@ export default function LoginOwner() {
       const data = await response.json();
 
       if (response.status === 200) {
+        // Store token in localStorage
+        localStorage.setItem("token", data.token);
+
+        // Store owner ID in localStorage
+        localStorage.setItem("owner_id", data.user.id);
+
+        // Update context (if needed)
         login(data.token, data.user);
+
         setSuccess("Login successful!");
         navigate("/ownerpanel");
       } else if (response.status === 401) {
@@ -47,14 +55,11 @@ export default function LoginOwner() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 px-4 overflow-hidden">
-      {/* Watermark text */}
       <h1 className="absolute text-[6rem] sm:text-[8rem] font-extrabold text-white/10 select-none">
         HomeFinder
       </h1>
 
-      {/* Login card */}
       <div className="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             Owner Login
@@ -64,23 +69,12 @@ export default function LoginOwner() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="text-red-500 text-center font-medium">{error}</div>
-          )}
-          {success && (
-            <div className="text-green-600 text-center font-medium">
-              {success}
-            </div>
-          )}
+          {error && <div className="text-red-500 text-center font-medium">{error}</div>}
+          {success && <div className="text-green-600 text-center font-medium">{success}</div>}
 
-          {/* Email */}
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email<span className="text-red-500">*</span>
             </label>
             <input
@@ -91,18 +85,12 @@ export default function LoginOwner() {
               onChange={handleChange}
               required
               placeholder="Enter your email"
-              className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg 
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 
-                         dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+              className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-700 dark:text-white"
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password<span className="text-red-500">*</span>
             </label>
             <input
@@ -113,29 +101,21 @@ export default function LoginOwner() {
               onChange={handleChange}
               required
               placeholder="Enter your password"
-              className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg 
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 
-                         dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+              className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-700 dark:text-white"
             />
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 px-4 bg-blue-600 text-white font-medium text-sm 
-                       rounded-lg shadow-md hover:bg-blue-700 transition"
+            className="w-full py-3 px-4 bg-blue-600 text-white font-medium text-sm rounded-lg shadow-md hover:bg-blue-700 transition"
           >
             Login
           </button>
         </form>
 
-        {/* Footer */}
         <p className="mt-6 text-sm text-center text-gray-600 dark:text-gray-400">
           Don’t have an account?{" "}
-          <a
-            href="/signup_owner"
-            className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
-          >
+          <a href="/signup_owner" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">
             Register
           </a>
         </p>

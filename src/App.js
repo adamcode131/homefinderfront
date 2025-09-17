@@ -18,7 +18,11 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<Home />} /> 
                         <Route path="/result" element={<Result />} />
-                        <Route path="/addproperty" element={<AddProperty />} />
+                        <Route path="/addproperty" element={
+                            <ProtectedRoute>
+                                <AddProperty />
+                            </ProtectedRoute>
+                            } />
                         
                         {/* Protected Owner Routes */}
                         <Route path="/ownerpanel" element={
