@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
-export default function SignupOwner() {
+export default function SignupUser() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -12,7 +12,7 @@ export default function SignupOwner() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    setError(""); 
+    setError("");
     setSuccess("");
   };
 
@@ -22,7 +22,7 @@ export default function SignupOwner() {
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/signupowner", {
+      const response = await fetch("http://localhost:8000/api/signupuser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -33,7 +33,7 @@ export default function SignupOwner() {
       if (response.status === 201) {
         login(data.token, data.user);
         setSuccess("Account created successfully!");
-        navigate("/ownerpanel");
+        navigate("/userpanel");
       } else if (response.status === 422) {
         setError("Validation failed. Check your input.");
       } else {
@@ -55,7 +55,7 @@ export default function SignupOwner() {
         <div className="relative z-10 text-center max-w-md">
           <h2 className="text-4xl font-bold mb-4">Welcome to HomeFinder</h2>
           <p className="text-lg text-blue-100">
-            Create an account and manage your properties with ease.
+            Create an account and explore properties with ease.
           </p>
         </div>
       </div>
@@ -67,18 +67,14 @@ export default function SignupOwner() {
           className="w-full max-w-md bg-white dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 p-10 space-y-8"
         >
           <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-            Owner Signup
+            User Signup
           </h2>
 
           {error && (
-            <div className="text-red-600 text-center font-medium mb-4">
-              {error}
-            </div>
+            <div className="text-red-600 text-center font-medium mb-4">{error}</div>
           )}
           {success && (
-            <div className="text-green-600 text-center font-medium mb-4">
-              {success}
-            </div>
+            <div className="text-green-600 text-center font-medium mb-4">{success}</div>
           )}
 
           {/* Name */}
@@ -162,7 +158,7 @@ export default function SignupOwner() {
           {/* Footer */}
           <div className="text-center mt-4">
             <a
-              href="/login_owner"
+              href="/login_user"
               className="text-blue-600 hover:underline font-medium"
             >
               Already have an account? Login

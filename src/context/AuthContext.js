@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is logged in on app load
   useEffect(() => {
-    const token = localStorage.getItem('ownerToken');
+    const token = localStorage.getItem('token');
     if (token) {
       // Verify token is still valid with backend
       verifyToken(token);
@@ -35,23 +35,23 @@ export const AuthProvider = ({ children }) => {
         const userData = await response.json();
         setCurrentUser(userData);
       } else {
-        localStorage.removeItem('ownerToken');
+        localStorage.removeItem('token');
       }
     } catch (error) {
       console.error('Token verification failed:', error);
-      localStorage.removeItem('ownerToken');
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
   };
 
   const login = (token, userData) => {
-    localStorage.setItem('ownerToken', token);
+    localStorage.setItem('token', token);
     setCurrentUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('ownerToken');
+    localStorage.removeItem('token');
     setCurrentUser(null);
   };
 

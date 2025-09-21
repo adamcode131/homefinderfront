@@ -1,15 +1,23 @@
+import { Link } from "react-router-dom";
+
 export default function Home() {
   return (
     <div id="main-container" className="min-h-[900px] bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header */}
-      <header id="header" className="w-full px-8 py-5 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-50">
+      <header
+        id="header"
+        className="w-full px-8 py-5 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-50"
+      >
         {/* Logo */}
         <div className="flex items-center group">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
             <i className="fa-solid fa-home text-white text-lg"></i>
           </div>
-          <span className="ml-3 text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">HomeFinder</span>
+          <span className="ml-3 text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            HomeFinder
+          </span>
         </div>
+
         {/* Right side navigation */}
         <div className="flex items-center space-x-6">
           {/* Language Selector */}
@@ -20,16 +28,41 @@ export default function Home() {
               <option value="ar">🇲🇦 AR</option>
             </select>
           </div>
-          {/* Login/Signup */}
-          <div className="flex items-center space-x-3">
-            <button className="text-slate-600 hover:text-slate-900 px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-slate-100 rounded-lg">
-              Login
-            </button>
-            <span className="text-slate-300">|</span>
-            <button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-              Sign Up
-            </button>
-          </div>
+
+          {/* Owner Section */}
+<div className="flex items-center gap-4">
+  {/* Language Selector */}
+  <div className="relative">
+    <select className="bg-white/90 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md">
+      <option value="fr">🇫🇷 FR</option>
+      <option value="en">🇺🇸 EN</option>
+      <option value="ar">🇲🇦 AR</option>
+    </select>
+  </div>
+
+  {/* Auth Buttons */}
+  <div className="flex gap-3">
+    <Link to="/signup_owner">
+      <button className="bg-gradient-to-r from-blue-500 to-blue-600 
+        hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl 
+        text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
+        transform hover:-translate-y-0.5 border border-blue-400/20">
+        <i className="fa-solid fa-building mr-2"></i>
+        Annonceur
+      </button>
+    </Link>
+
+    <Link to="/signup_user">
+      <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 
+        hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl 
+        text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
+        transform hover:-translate-y-0.5 border border-emerald-400/20">
+        <i className="fa-solid fa-user mr-2"></i>
+        Client
+      </button>
+    </Link>
+  </div>
+</div>
         </div>
       </header>
 

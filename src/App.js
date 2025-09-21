@@ -8,6 +8,14 @@ import AdminPanel from "./AdminPanel";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import SignupOwner from "./SignUpOwner";
+import UpdateProperty from "./UpdateProperty";
+import UserPanel from "./UserPanel";
+import SignupUser from "./SignUpUser";
+import LoginUser from "./LoginUser";
+
+// testing
+import SignUpTest from "./TEST/SignUpTest.jsx";
+import LoginTest from "./TEST/LoginTest.jsx";
 
 
 export default function App() {
@@ -19,21 +27,21 @@ export default function App() {
                         <Route path="/" element={<Home />} /> 
                         <Route path="/result" element={<Result />} />
                         <Route path="/addproperty" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={["owner"]}>
                                 <AddProperty />
                             </ProtectedRoute>
                             } />
-                        
+
                         {/* Protected Owner Routes */}
                         <Route path="/ownerpanel" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={["owner"]}>
                                 <OwnerPanel />
                             </ProtectedRoute>
                         } />
                         
                         {/* Protected Admin Route - Add if needed */}
                         <Route path="/adminpanel" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={["admin"]}>
                                 <AdminPanel />
                             </ProtectedRoute>
                         } />   
@@ -41,6 +49,28 @@ export default function App() {
                         {/* Public Auth Routes */}
                         <Route path="/login_owner" element={<LoginOwner />} />
                         <Route path="/signup_owner" element={<SignupOwner />} />
+                        <Route path="/updateproperty/:propertyId" element={
+                            <ProtectedRoute allowedRoles={["owner"]}>
+                                <UpdateProperty />
+                            </ProtectedRoute>
+                            } 
+                        /> 
+
+                        <Route path="/userpanel" element={
+                            <ProtectedRoute allowedRoles={["user"]}>
+                                <UserPanel />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="/signup_user" element={<SignupUser/>}/>
+                        <Route path="/login_user" element={<LoginUser/>}/>
+
+                        {/* testing */}
+                        
+                        <Route path="/signuptest" element={<SignUpTest/>} />
+                        <Route path="/logintest" element={<LoginTest/>} />
+                        
+
 
                     </Routes>
                 </BrowserRouter>
