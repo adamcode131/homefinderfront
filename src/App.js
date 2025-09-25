@@ -16,6 +16,7 @@ import LoginUser from "./LoginUser";
 // testing
 import SignUpTest from "./TEST/SignUpTest.jsx";
 import LoginTest from "./TEST/LoginTest.jsx";
+import ResultDetails from "./ResultDetails.jsx";
 
 
 export default function App() {
@@ -69,7 +70,7 @@ export default function App() {
                         
                         <Route path="/signuptest" element={<SignUpTest/>} />
                         <Route path="/logintest" element={<LoginTest/>} />
-                        
+                        <Route path="/details/:propertyId" element={<ResultDetails/>} />
 
 
                     </Routes>

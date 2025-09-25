@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import {useNavigate} from "react-router-dom";
 
 export default function Result() {
   const [validatedProperties, setValidatedProperties] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [showCart, setShowCart] = useState(false);
+  const navigate = useNavigate() ; 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -13,11 +15,22 @@ export default function Result() {
     date_reservation: "",
   });
   const [addedItem, setAddedItem] = useState(null);
+  const [currentImageIndexes, setCurrentImageIndexes] = useState({});
+
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetch("http://localhost:8000/api/validatedproperties")
       .then((resp) => resp.json())
-      .then((data) => setValidatedProperties(data.properties))
+      .then((data) => {
+        setValidatedProperties(data.properties);
+        // Initialize current image indexes for each property
+        const indexes = {};
+        data.properties.forEach(property => {
+          indexes[property.id] = 0;
+        });
+        setCurrentImageIndexes(indexes);
+      })
       .catch((err) =>
         console.error("Error fetching validated properties:", err)
       );
@@ -45,17 +58,20 @@ export default function Result() {
       alert("Veuillez ajouter au moins une propriété au panier.");
       return;
     }
-
     try {
       const reservationData = {
         ...formData,
         properties: cartItems.map((item) => item.id),
       };
-
       const response = await axios.post(
         "http://localhost:8000/api/leads",
         reservationData,
-        { headers: { "Content-Type": "application/json" } }
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
       );
 
       console.log("Réservation envoyée:", response.data);
@@ -70,6 +86,37 @@ export default function Result() {
     }
   };
 
+  // Carousel functions
+  const nextImage = (propertyId) => {
+    const property = validatedProperties.find(p => p.id === propertyId);
+    if (!property || !property.images || property.images.length === 0) return;
+    
+    setCurrentImageIndexes(prev => ({
+      ...prev,
+      [propertyId]: (prev[propertyId] + 1) % property.images.length
+    }));
+  };
+
+  const prevImage = (propertyId) => {
+    const property = validatedProperties.find(p => p.id === propertyId);
+    if (!property || !property.images || property.images.length === 0) return;
+    
+    setCurrentImageIndexes(prev => ({
+      ...prev,
+      [propertyId]: (prev[propertyId] - 1 + property.images.length) % property.images.length
+    }));
+  };
+
+  const goToImage = (propertyId, index) => {
+    const property = validatedProperties.find(p => p.id === propertyId);
+    if (!property || !property.images || index >= property.images.length) return;
+    
+    setCurrentImageIndexes(prev => ({
+      ...prev,
+      [propertyId]: index
+    }));
+  };
+
   const cartVariants = {
     hidden: { opacity: 0, x: 300 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
@@ -80,6 +127,12 @@ export default function Result() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, height: 0, transition: { duration: 0.2 } },
+  };
+
+  const imageVariants = {
+    enter: { opacity: 0 },
+    center: { opacity: 1 },
+    exit: { opacity: 0 }
   };
 
   return (
@@ -94,7 +147,7 @@ export default function Result() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex-shrink-0">
-              <motion.div 
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="text-xl font-bold text-blue-600 flex items-center"
               >
@@ -104,7 +157,7 @@ export default function Result() {
             </div>
             <div className="flex-1 max-w-2xl mx-8">
               <div className="relative">
-                <motion.input 
+                <motion.input
                   whileFocus={{ scale: 1.02 }}
                   type="text"
                   placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier"
@@ -124,7 +177,7 @@ export default function Result() {
               >
                 <i className="fa-solid fa-cart-shopping text-xl"></i>
                 {cartItems.length > 0 && (
-                  <motion.span 
+                  <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
@@ -134,7 +187,7 @@ export default function Result() {
                 )}
               </motion.button>
 
-              <motion.select 
+              <motion.select
                 whileHover={{ scale: 1.05 }}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-colors"
               >
@@ -142,16 +195,16 @@ export default function Result() {
                 <option>EN</option>
                 <option>AR</option>
               </motion.select>
-              
-              <motion.button 
+
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
               >
                 Login
               </motion.button>
-              
-              <motion.button 
+
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all duration-200 shadow-sm hover:shadow-md"
@@ -196,58 +249,140 @@ export default function Result() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {validatedProperties.map((property) => (
-                  <motion.div
-                    key={property.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    whileHover={{ y: -5 }}
-                    className="bg-white rounded-xl shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300 border border-gray-100 group cursor-pointer"
-                  >
-                    <div className="h-48 relative overflow-hidden">
-                      <motion.img
-                        whileHover={{ scale: 1.1 }}
-                        className="w-full h-full object-cover transition-transform duration-500"
-                        src={`http://localhost:8000/storage/${property.images[0].url}`}
-                        alt={property.title}
-                      />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="text-gray-900 font-semibold mb-2 text-lg">
-                        {property.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-4 flex items-center">
-                        <i className="fa-solid fa-bed mr-2 text-blue-600"></i>
-                        {property.description}
-                      </p>
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-xl font-bold text-gray-900">
-                          {property.sale_price === 0
-                            ? property.rent_price
-                            : property.sale_price}{" "}
-                          DH
-                          <span className="text-sm font-normal text-gray-500">
-                            {property.sale_price === 0 ? "/mois" : "vente"}
-                          </span>
-                        </span>
-                        <span className="text-sm text-gray-500 flex items-center">
-                          <i className="fa-solid fa-location-dot mr-1 text-blue-600"></i>
-                          {property.ville.name}
-                        </span>
+                {validatedProperties.map((property) => {
+                  const currentIndex = currentImageIndexes[property.id] || 0;
+                  const hasImages = property.images && property.images.length > 0;
+                  const totalImages = hasImages ? property.images.length : 0;
+                  return (
+                    <motion.div
+                      key={property.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      whileHover={{ y: -5 }}
+                      onClick={()=>navigate(`/details/${property.id}`)}
+                      className="bg-white rounded-xl shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300 border border-gray-100 group cursor-pointer"
+                    >
+                      {/* Image Carousel */}
+                      <div className="h-48 relative overflow-hidden">
+                        {hasImages ? (
+                          <>
+                            <AnimatePresence mode="wait">
+                              <motion.img
+                                key={currentIndex}
+                                variants={imageVariants}
+                                initial="enter"
+                                animate="center"
+                                exit="exit"
+                                transition={{ duration: 0.3 }}
+                                className="w-full h-full object-cover"
+                                src={`http://localhost:8000/storage/${property.images[currentIndex].url}`}
+                                alt={property.title}
+                                onError={(e) => {
+                                  e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
+                                }}
+                              />
+                            </AnimatePresence>
+
+                            {/* Navigation Arrows */}
+                            {totalImages > 1 && (
+                              <>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    prevImage(property.id);
+                                  }}
+                                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition-all z-10"
+                                >
+                                  <i className="fa-solid fa-chevron-left text-sm"></i>
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    nextImage(property.id);
+                                  }}
+                                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition-all z-10"
+                                >
+                                  <i className="fa-solid fa-chevron-right text-sm"></i>
+                                </motion.button>
+                              </>
+                            )}
+
+                            {/* Image Indicators */}
+                            {totalImages > 1 && (
+                              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
+                                {property.images.map((_, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      goToImage(property.id, index);
+                                    }}
+                                    className={`w-2 h-2 rounded-full transition-all ${
+                                      index === currentIndex 
+                                        ? 'bg-white' 
+                                        : 'bg-white/50'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Image Counter */}
+                            {totalImages > 1 && (
+                              <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full z-10">
+                                {currentIndex + 1}/{totalImages}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <i className="fa-solid fa-image text-4xl text-gray-400"></i>
+                          </div>
+                        )}
+
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => handleAddToCart(property)}
-                        className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-                      >
-                        Réserver une visite
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                ))}
+
+                      <div className="p-5">
+                        <h3 className="text-gray-900 font-semibold mb-2 text-lg">
+                          {property.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-4 flex items-center">
+                          <i className="fa-solid fa-bed mr-2 text-blue-600"></i>
+                          {property.description}
+                        </p>
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-xl font-bold text-gray-900">
+                            {property.sale_price === 0
+                              ? property.rent_price
+                              : property.sale_price}{" "}
+                            DH
+                            <span className="text-sm font-normal text-gray-500">
+                              {property.sale_price === 0 ? "/mois" : "vente"}
+                            </span>
+                          </span>
+                          <span className="text-sm text-gray-500 flex items-center">
+                            <i className="fa-solid fa-location-dot mr-1 text-blue-600"></i>
+                            {property.ville?.name || 'N/A'}
+                          </span>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => handleAddToCart(property)}
+                          className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+                        >
+                          Réservation Rapide
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </section>
 
@@ -272,9 +407,9 @@ export default function Result() {
                       <i className="fa-solid fa-times"></i>
                     </motion.button>
                   </div>
-                  
+
                   {cartItems.length === 0 ? (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="text-gray-500 text-center py-8"
@@ -297,7 +432,9 @@ export default function Result() {
                               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                             >
                               <div className="flex-1">
-                                <span className="font-medium block">{item.title}</span>
+                                <span className="font-medium block">
+                                  {item.title}
+                                </span>
                                 <span className="text-sm text-gray-500">
                                   {item.sale_price === 0
                                     ? item.rent_price + " DH/mois"
@@ -318,50 +455,70 @@ export default function Result() {
                       </ul>
 
                       {/* Reservation Form */}
-                      <motion.form 
+                      <motion.form
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        onSubmit={handleReservation} 
+                        onSubmit={handleReservation}
                         className="space-y-3 mt-6 pt-4 border-t border-gray-200"
                       >
-                        <h3 className="font-semibold text-gray-700">Informations de réservation</h3>
-                        <input
-                          type="text"
-                          name="name"
-                          placeholder="Nom complet"
-                          value={formData.name}
-                          onChange={handleFormChange}
-                          required
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        />
-                        <input
-                          type="email"
-                          name="email"
-                          placeholder="Email"
-                          value={formData.email}
-                          onChange={handleFormChange}
-                          required
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        />
-                        <input
-                          type="tel"
-                          name="phone"
-                          placeholder="Téléphone"
-                          value={formData.phone}
-                          onChange={handleFormChange}
-                          required
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        />
-                        <input
-                          type="date"
-                          name="date_reservation"
-                          value={formData.date_reservation}
-                          onChange={handleFormChange}
-                          required
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        />
-                        <motion.button 
+                        <h3 className="font-semibold text-gray-700">
+                          Informations de réservation
+                        </h3>
+
+                        {/* If logged in → only date + confirm */}
+                        {token ? (
+                          <>
+                            <input
+                              type="date"
+                              name="date_reservation"
+                              value={formData.date_reservation}
+                              onChange={handleFormChange}
+                              required
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <input
+                              type="text"
+                              name="name"
+                              placeholder="Nom complet"
+                              value={formData.name}
+                              onChange={handleFormChange}
+                              required
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                            <input
+                              type="email"
+                              name="email"
+                              placeholder="Email"
+                              value={formData.email}
+                              onChange={handleFormChange}
+                              required
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                            <input
+                              type="tel"
+                              name="phone"
+                              placeholder="Téléphone"
+                              value={formData.phone}
+                              onChange={handleFormChange}
+                              required
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                            <input
+                              type="date"
+                              name="date_reservation"
+                              value={formData.date_reservation}
+                              onChange={handleFormChange}
+                              required
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            />
+                          </>
+                        )}
+
+                        <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           type="submit"
