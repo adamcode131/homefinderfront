@@ -1,25 +1,63 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function UserPanel() {
   const [section, setSection] = useState('mes-demandes');
   const navigate = useNavigate();
-  const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '0612345678',
-    password: '',
-    newPassword: '',
-    favoriteNeighborhoods: '',
-    preferredType: '',
-    emailAlerts: true,
-  });
+const [profile, setProfile] = useState({
+  name: '',
+  email: '',
+  phone: '',
+  favoriteNeighborhoods: '',
+  preferredType: '',
+  emailAlerts: false
+});
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:8000/api/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (resp) => {
+        const data = await resp.json();
 
-  const [demandes, setDemandes] = useState([
-    { id: 1, property: 'Appartement Gauthier', type: 'Appartement', price: '4000 DH', status: 'En cours', date: '2025-09-18' },
-    { id: 2, property: 'Villa Oasis', type: 'Villa', price: '12000 DH', status: 'Accepté', date: '2025-09-12' },
-    { id: 3, property: 'Studio Downtown', type: 'Studio', price: '2500 DH', status: 'Refusé', date: '2025-09-05' },
-  ]);
+        console.log("User API response:", data, "Status:", resp.status);
+
+        if (!resp.ok) {
+          // HTTP error (401, 403, etc.)
+          console.warn("API returned error:", data);
+          return;
+        }
+
+        if (data.user) {
+          setProfile((prev) => ({
+            ...prev,
+            name: data.user.name || "",
+            email: data.user.email || "",
+            phone: data.user.phone || "",
+            favoriteNeighborhoods: data.user.favoriteNeighborhoods || "",
+            preferredType: data.user.preferredType || "",
+            emailAlerts: data.user.emailAlerts ?? false,
+          }));
+        } else {
+          console.warn("No user returned:", data);
+        }
+      })
+      .catch((err) => console.error("Network or parsing error:", err));
+  }, []);
+
+
+
+
+
+  const [demandes, setDemandes] = useState([]);
+
+  useEffect(()=>{
+    fetch('http://localhost:8000/api/all_leads',{headers : {'Authorization': `Bearer ${localStorage.getItem('token')}`}}) 
+    .then(res => res.json())
+    .then(data => setDemandes(data.leads))
+  },[]) 
+
+  
 
   const handleProfileChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,8 +66,25 @@ export default function UserPanel() {
 
   const handleProfileSubmit = (e) => {
     e.preventDefault();
-    alert('Profil mis à jour !'); // Ici vous pouvez appeler votre API
+  
+    fetch('http://localhost:8000/api/update_user', {
+      method: 'PUT', 
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json' 
+      },
+      body: JSON.stringify(profile)
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log('Success:', data);
+    })
+    .catch(err => {
+      console.error('Error:', err);
+    });
   };
+  
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -102,17 +157,17 @@ export default function UserPanel() {
                 <tbody>
                   {demandes.map((d) => (
                     <tr key={d.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-2 border-b">{d.property}</td>
-                      <td className="px-4 py-2 border-b">{d.type}</td>
-                      <td className="px-4 py-2 border-b">{d.price}</td>
+                      <td className="px-4 py-2 border-b">{d.property.title}</td>
+                      <td className="px-4 py-2 border-b">{d.property.type}</td>
+                      <td className="px-4 py-2 border-b">{d.property.sale_price?d.property.sale_price:d.property.rent_price}  {d.property.sale_price?'dh (vente)':'dh / mois'}</td>
                       <td className={`px-4 py-2 border-b font-medium ${d.status === 'Accepté' ? 'text-green-600' : d.status === 'Refusé' ? 'text-red-600' : 'text-yellow-600'}`}>
                         {d.status}
                       </td>
-                      <td className="px-4 py-2 border-b">{d.date}</td>
+                      <td className="px-4 py-2 border-b">{d.date_reservation}</td>
                       <td className="px-4 py-2 border-b space-x-2">
                         <button className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">Voir</button>
                         <button className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">Annuler</button>
-                      </td>
+                      </td> 
                     </tr>
                   ))}
                 </tbody>
