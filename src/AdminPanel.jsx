@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios' ; 
 
 export default function AdminPanel() {
   const [section, setSection] = useState('dashboard');
@@ -7,6 +8,25 @@ export default function AdminPanel() {
   const [filter,setFilter] = useState('') ; 
   const [filteredProperties, setFilteredProperties] = useState([]) ;  
   const [users,setUsers] = useState([]) ; 
+  // State for adding options to categories
+  const [showAddOptionForm, setShowAddOptionForm] = useState({});
+  const [newOption, setNewOption] = useState({
+    filter_category_id: null,
+    name: "",
+    slug: "",
+    sort_order: 0,
+    is_active: true
+  });
+  const [newCategory, setNewCategory] = useState({
+    name: "",
+    slug: "",
+    entity_types: "",
+    sort_order: 0,
+  });  
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newCategoryEntityTypes, setNewCategoryEntityTypes] = useState(["property"]);
+  const [categories, setCategories] = useState([]);
+  
   // fetch pending properties
   useEffect(() => {
     if (section === 'not_validated_properties') {
@@ -62,13 +82,174 @@ useEffect(() => {
   }
 }, [properties, filter]); 
 
+// fetch users
+useEffect(() => {
+  fetch('http://localhost:8000/api/users')
+    .then((resp) => resp.json())
+    .then((data) => setUsers(data.users || []))
+    .catch((err) => console.error(err));
+}, []);
 
-    useEffect(() => {
-      fetch('http://localhost:8000/api/users')
-        .then((resp) => resp.json())
-        .then((data) => setUsers(data.users || []))
-        .catch((err) => console.error(err));
-    }, []);
+// --- Fetch Categories from DB ---
+useEffect(() => {
+  if (section === "dashboard") {
+    fetchCategories();
+  }
+}, [section]);
+
+// Function to fetch categories
+const fetchCategories = async () => {
+  try {
+    const response = await axios.get("http://localhost:8000/api/admin/filter-categories", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    // Ensure it's always an array
+    setCategories(Array.isArray(response.data.categories) ? response.data.categories : []);
+  } catch (err) {
+    console.error("Failed to fetch categories:", err);
+    setCategories([]);
+  }
+};
+
+// ADD NEW CATEGORY 
+const handleAddCategory = async () => {
+  if (!newCategory.name.trim()) return;
+
+  try {
+    // Prepare payload
+    const payload = {
+      name: newCategory.name,
+      slug: newCategory.slug || undefined,
+      entity_types: newCategory.entity_types
+        ? newCategory.entity_types.split(",").map((type) => type.trim())
+        : ["property"],
+      sort_order: newCategory.sort_order || 0,
+      is_active: newCategory.is_active ?? true,
+    };
+
+    // Send POST request to backend
+    const response = await axios.post(
+      "http://localhost:8000/api/admin/filter-categories",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    // Refresh categories from database instead of just adding to UI
+    await fetchCategories();
+    
+    // Reset form
+    setNewCategory({ name: "", slug: "", entity_types: "", sort_order: 0, is_active: true });
+    setShowAddForm(false);
+
+  } catch (error) {
+    console.error("Failed to add category:", error.response?.data?.message || error.message);
+    alert("Failed to add category. Please try again.");
+  }
+}; 
+
+// DELETE CATEGORY
+const handleDeleteCategory = async (categoryId) => {
+  if (!window.confirm("Are you sure you want to delete this category?")) return;
+  
+  try {
+    await axios.delete(`http://localhost:8000/api/admin/filter-categories/${categoryId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    
+    // Refresh categories from database
+    await fetchCategories();
+  } catch (error) {
+    console.error("Failed to delete category:", error.response?.data?.message || error.message);
+    alert("Failed to delete category. Please try again.");
+  }
+}; 
+
+// Function to add a new option to a category
+const handleAddOption = async (categoryId) => {
+  if (!newOption.name.trim()) {
+    alert("Option name is required");
+    return;
+  }
+
+  try {
+    const payload = {
+      filter_category_id: categoryId,
+      name: newOption.name,
+      slug: newOption.slug || undefined,
+      sort_order: newOption.sort_order || 0,
+      is_active: newOption.is_active ?? true,
+    };
+
+    const response = await fetch(
+      "http://localhost:8000/api/admin/filter-options",
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to add option');
+    }
+
+    // Reset form and refresh categories
+    setNewOption({ 
+      filter_category_id: null, 
+      name: "", 
+      slug: "", 
+      sort_order: 0, 
+      is_active: true 
+    });
+    setShowAddOptionForm({ ...showAddOptionForm, [categoryId]: false });
+    await fetchCategories();
+    
+  } catch (error) {
+    console.error("Failed to add option:", error.message);
+    alert("Failed to add option. Please try again.");
+  }
+};
+
+// Function to delete an option
+const handleDeleteOption = async (optionId) => {
+  if (!window.confirm("Are you sure you want to delete this option?")) return;
+
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/admin/filter-options/${optionId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to delete option');
+    }
+
+    await fetchCategories();
+    
+  } catch (error) {
+    console.error("Failed to delete option:", error.message);
+    alert(error.message || "Failed to delete option. Please try again.");
+  }
+};
+
+
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -261,72 +442,164 @@ useEffect(() => {
 
         {/* All Properties */}
         {section === 'all_properties' && (
-          <div className="w-full max-w-4xl">
-            <h1 className="text-3xl font-bold mb-6">All Properties</h1>
-            {/* filter bar  */} 
-  
-            <div className="relative w-full max-w-lg">
-              <input
-                type="text"
-                placeholder="Rechercher par titre ou type..."
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 shadow-sm 
-                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                          placeholder-slate-400 bg-white transition-all duration-200
-                          hover:border-slate-300"
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <i className="fa-solid fa-magnifying-glass"></i>
-              </span>
+  <div className="w-full max-w-6xl mx-auto px-4 py-8">
+    {/* Header Section */}
+    <div className="text-center mb-12">
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent mb-4">
+        All Properties
+      </h1>
+      <p className="text-slate-600 text-lg max-w-2xl mx-auto">
+        Discover your perfect property from our curated collection
+      </p>
+    </div>
+
+    {/* Enhanced Search Bar */}
+    <div className="relative w-full max-w-2xl mx-auto mb-12">
+      <div className="relative group">
+        <input
+          type="text"
+          placeholder="Search by title, type, or city..."
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="w-full pl-12 pr-6 py-4 rounded-2xl border-2 border-blue-100 
+                    shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-200 
+                    focus:border-blue-400 placeholder-slate-400 bg-white 
+                    transition-all duration-300 hover:border-blue-200
+                    hover:shadow-xl text-slate-700 font-medium"
+        />
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 
+                       group-hover:text-green-500 transition-colors duration-300">
+          <i className="fa-solid fa-magnifying-glass text-lg"></i>
+        </span>
+        
+        {/* Animated search indicator */}
+        {filter && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* Results Section */}
+    {filteredProperties.length === 0 ? (
+      <div className="text-center py-16">
+        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-blue-50 
+                      flex items-center justify-center">
+          <i className="fa-solid fa-house-circle-exclamation text-3xl text-blue-400"></i>
+        </div>
+        <h3 className="text-2xl font-semibold text-slate-700 mb-3">
+          No properties found
+        </h3>
+        <p className="text-slate-500 max-w-md mx-auto">
+          Try adjusting your search terms or browse all available properties
+        </p>
+      </div>
+    ) : (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredProperties.map((property) => (
+          <div
+            key={property.id}
+            className="group bg-white rounded-2xl border-2 border-blue-50 
+                     shadow-lg hover:shadow-2xl transition-all duration-500 
+                     hover:border-blue-100 overflow-hidden hover:-translate-y-2"
+          >
+            {/* Property Images */}
+            <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-50 to-green-50">
+              {property.images && property.images.length > 0 ? (
+                <>
+                  <img
+                    src={`http://localhost:8000/storage/${property.images[0].url}`}
+                    alt={property.title}
+                    className="w-full h-full object-cover group-hover:scale-110 
+                             transition-transform duration-700"
+                  />
+                  {/* Image count badge */}
+                  {property.images.length > 1 && (
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm 
+                                  px-2 py-1 rounded-full text-xs font-semibold 
+                                  text-blue-700 shadow-sm">
+                      +{property.images.length - 1}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <i className="fa-solid fa-image text-4xl text-blue-200"></i>
+                </div>
+              )}
+              
+              {/* Status Badge */}
+              <div className={`absolute top-3 left-3 px-3 py-1 rounded-full 
+                             text-xs font-semibold backdrop-blur-sm
+                             ${property.is_validated 
+                               ? 'bg-green-500/90 text-white' 
+                               : 'bg-orange-500/90 text-white'}`}>
+                {property.is_validated ? '✓ Validated' : 'Pending'}
+              </div>
             </div>
 
-            {filteredProperties.length === 0 ? (
-              <p>No properties found.</p>
-            ) : (
-              <ul className="space-y-4">
-                {filteredProperties.map((property) => (
-                  <li
-                    key={property.id}
-                    className="p-4 bg-white border rounded-lg shadow hover:shadow-md transition-all"
-                  >
-                    <h2 className="text-xl font-semibold">{property.title}</h2>
-                    <p>Type: {property.type}</p>
-                    <p>Ville: {property.ville_id}</p>
-                    <p>
-                      Montant :{' '}
-                      {property.sale_price ? property.sale_price : property.rent_price}{' '}
-                      {property.sale_price ? 'dh (paiement seul fois)' : 'dh/mois'}
-                    </p>
+            {/* Property Details */}
+            <div className="p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-slate-800 mb-2 
+                             group-hover:text-blue-600 transition-colors 
+                             duration-300 line-clamp-2">
+                  {property.title}
+                </h2>
+                
+                <div className="flex items-center gap-4 text-sm text-slate-600 mb-3">
+                  <span className="flex items-center gap-1">
+                    <i className="fa-solid fa-tag text-blue-400"></i>
+                    {property.type}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <i className="fa-solid fa-location-dot text-green-400"></i>
+                    {property.ville_id}
+                  </span>
+                </div>
+              </div>
 
-                    {/* ✅ Statut line */}
-                    <p>
-                      Statut:{' '}
-                      {property.is_validated
-                        ? <span className="text-green-600 font-medium">Validated</span>
-                        : <span className="text-red-500 font-medium">Not validated yet</span>}
-                    </p>
+              {/* Price Section */}
+              <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 
+                            rounded-xl border border-blue-100">
+                <p className="text-lg font-bold text-blue-700">
+                  {property.sale_price ? property.sale_price : property.rent_price} DH
+                </p>
+                <p className="text-sm text-slate-600">
+                  {property.sale_price ? 'One-time payment' : 'Per month'}
+                </p>
+              </div>
 
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {property.images && property.images.length > 0 ? (
-                        property.images.map((img) => (
-                          <img
-                            key={img.id}
-                            src={`http://localhost:8000/storage/${img.url}`}
-                            alt={property.title}
-                            className="w-32 h-20 object-cover rounded-lg border"
-                          />
-                        ))
-                      ) : (
-                        <p className="text-gray-400 text-sm">No images available</p>
-                      )}
+              {/* Additional Images Preview */}
+              {property.images && property.images.length > 1 && (
+                <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                  {property.images.slice(1, 4).map((img) => (
+                    <img
+                      key={img.id}
+                      src={`http://localhost:8000/storage/${img.url}`}
+                      alt={property.title}
+                      className="w-12 h-12 object-cover rounded-lg border-2 
+                               border-white shadow-sm hover:border-blue-300 
+                               transition-all duration-300"
+                    />
+                  ))}
+                  {property.images.length > 4 && (
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg border-2 
+                                  border-white flex items-center justify-center 
+                                  text-xs font-semibold text-blue-600">
+                      +{property.images.length - 4}
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        )} 
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
         {section === "users" && (
           <div className="w-full max-w-7xl mx-auto px-4 py-8">
@@ -458,8 +731,294 @@ useEffect(() => {
               </div>
             )}
           </div>
-        )}
+        )} 
+
+          {section === "dashboard" && (
+            <div className="p-8 bg-gradient-to-br from-slate-50 to-blue-50/30 min-h-screen w-full">
+              {/* Header */}
+              <div className="mb-12 text-center">
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                  Filter Dashboard
+                </h2>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                  Manage your categories and options with ease
+                </p>
+              </div>
+
+              {/* Add Category Button */}
+              {!showAddForm && (
+                <div className="flex justify-center mb-8">
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all duration-300"
+                  >
+                    + Add Category
+                  </button>
+                </div>
+              )}
+
+              {/* Add Category Form */}
+              {showAddForm && (
+            <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md mb-8">
+              <h3 className="text-2xl font-bold mb-4">Add New Category</h3>
+              <div className="space-y-4">
+                
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Name</label>
+                  <input
+                    type="text"
+                    placeholder="Category name"
+                    value={newCategory.name}
+                    onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                    className="w-full p-3 border rounded-xl border-gray-300"
+                  />
+                </div>
+
+                {/* Entity Types */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Entity Types</label>
+                  <select
+                    value={newCategory.entity_types}
+                    onChange={(e) =>
+                      setNewCategory({ ...newCategory, entity_types: e.target.value })
+                    }
+                    className="w-full p-3 border rounded-xl border-gray-300"
+                  >
+                    <option value="">Select entity type</option>
+                    {newCategoryEntityTypes.map((type, index) => (
+                      <option key={index} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+
+                {/* Sort Order */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Sort Order</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={newCategory.sort_order}
+                    onChange={(e) => setNewCategory({ ...newCategory, sort_order: parseInt(e.target.value) })}
+                    className="w-full p-3 border rounded-xl border-gray-300"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={handleAddCategory}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition"
+                  >
+                    Add Category
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+
+              {/* Categories List */}
+              {categories && categories.length > 0 ? (
+                <div className="space-y-8 max-w-6xl mx-auto">
+                  {categories.map((category) => (
+                    <div
+                      key={category.id ?? Math.random()}
+                      className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 overflow-hidden transform hover:scale-[1.01]"
+                    >
+                      {/* Category Header */}
+                      <div className="flex justify-between items-center p-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                        <h3 className="text-2xl font-bold">{category.name}</h3>
+                        <div className="flex gap-3">
+                          <button className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl font-semibold transition-all duration-300">
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteCategory(category.id)}
+                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all duration-300"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Category Meta */}
+                      <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-white border-t border-gray-100">
+                        <div>
+                          <span className="text-sm text-gray-500">Slug</span>
+                          <p className="text-lg font-semibold">{category.slug || "-"}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500">Entity Types</span>
+                          <p className="text-lg font-semibold">
+                            {Array.isArray(category.entity_types) ? category.entity_types.join(", ") : "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-500">Sort Order</span>
+                          <p className="text-lg font-semibold">{category.sort_order ?? "-"}</p>
+                        </div>
+                      </div>
+
+                      {/* Options */}
+                      
+{/* Options */}
+<div className="p-6 bg-gray-50 border-t border-gray-100">
+  {/* Header with Add Option Button */}
+  <div className="flex justify-between items-center mb-4">
+    <h4 className="text-xl font-bold">
+      Options ({category.active_options?.length || 0})
+    </h4>
+    <button
+      onClick={() => setShowAddOptionForm({ 
+        ...showAddOptionForm, 
+        [category.id]: !showAddOptionForm[category.id] 
+      })}
+      className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-all duration-300 flex items-center gap-2"
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+      Add Option
+    </button>
+  </div>
+
+  {/* Add Option Form */}
+  {showAddOptionForm[category.id] && (
+    <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+      <h5 className="font-semibold mb-3 text-gray-700">New Option</h5>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Option Name *
+          </label>
+          <input
+            type="text"
+            placeholder="e.g., Swimming Pool, Garden, etc."
+            value={newOption.name}
+            onChange={(e) => setNewOption({ ...newOption, name: e.target.value })}
+            className="w-full p-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Slug (optional)
+          </label>
+          <input
+            type="text"
+            placeholder="Auto-generated if empty"
+            value={newOption.slug}
+            onChange={(e) => setNewOption({ ...newOption, slug: e.target.value })}
+            className="w-full p-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Sort Order
+          </label>
+          <input
+            type="number"
+            placeholder="0"
+            value={newOption.sort_order}
+            onChange={(e) => setNewOption({ 
+              ...newOption, 
+              sort_order: parseInt(e.target.value) || 0 
+            })}
+            className="w-full p-2 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button
+            onClick={() => {
+              setShowAddOptionForm({ ...showAddOptionForm, [category.id]: false });
+              setNewOption({ 
+                filter_category_id: null, 
+                name: "", 
+                slug: "", 
+                sort_order: 0, 
+                is_active: true 
+              });
+            }}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => handleAddOption(category.id)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium"
+          >
+            Add Option
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Options List */}
+  {category.active_options && category.active_options.length > 0 ? (
+    <div className="space-y-3">
+      {category.active_options.map((option) => (
+        <div
+          key={option.id ?? Math.random()}
+          className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all duration-300 group"
+        >
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-gray-800">{option.name}</span>
+              <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                {option.slug}
+              </span>
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              Sort Order: {option.sort_order}
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <button 
+              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all duration-300 text-sm font-medium"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDeleteOption(option.id)}
+              className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-all duration-300 text-sm font-medium"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-center py-8 bg-white rounded-lg border-2 border-dashed border-gray-200">
+      <svg className="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+      </svg>
+      <p className="text-gray-400 font-medium">No options available</p>
+    </div>
+  )}
+</div>
+                    
+                    </div>
+                  ))}
+                </div> 
+              ) : (
+                <p className="text-center text-gray-500">No categories found.</p>
+              )}
+            </div>
+          )}
+
+
+
+
       </main>
     </div>
   );
-}
+} 
