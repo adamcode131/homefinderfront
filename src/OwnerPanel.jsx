@@ -347,10 +347,22 @@ function Leads() {
   const [unlockedLeads, setUnlockedLeads] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
 
-  // Fetch all leads
   useEffect(() => {
-    fetch("http://localhost:8000/api/all_leads")
-      .then((resp) => resp.json())
+    const token = localStorage.getItem('token'); // or wherever you store your token
+    
+    fetch("http://localhost:8000/api/all_leads", {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error(`HTTP error! status: ${resp.status}`);
+        }
+        return resp.json();
+      })
       .then((data) => {
         setLeads(data.leads || []);
         setLoading(false);
@@ -599,7 +611,7 @@ function Leads() {
                       <span>Lead</span>
                       <i className={`fa-solid ${getSortIcon('name')} text-slate-400 text-xs`}></i>
                     </div>
-                  </th>
+                  </th> 
                   <th 
                     className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors whitespace-nowrap"
                     onClick={() => handleSort('email')}

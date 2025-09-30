@@ -66,10 +66,7 @@ export default function App() {
                         <Route path="/signup_user" element={<SignupUser/>}/>
                         <Route path="/login_user" element={<LoginUser/>}/>
 
-                        {/* testing */}
                         
-                        <Route path="/signuptest" element={<SignUpTest/>} />
-                        <Route path="/logintest" element={<LoginTest/>} />
                         <Route path="/details/:propertyId" element={<ResultDetails/>} />
 
 

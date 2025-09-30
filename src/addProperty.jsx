@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 export default function AddProperty() {
   const [form, setForm] = useState({
     title: '',
-    type: '',
+    //type: '',
     ville_id: '',      // store ville ID
     quartier_id: '',   // store quartier ID
     description: '',
@@ -11,10 +11,35 @@ export default function AddProperty() {
     rent_price: '',
     sale_price: '',
     images: [],
-  });
+    filters : []  // ✅ Added: will store selected filter options
+  }); 
+  const [categories,setCategories] = useState([])
 
   const [villes, setVilles] = useState([]);
   const [quartiers, setQuartiers] = useState([]);
+
+  // fetch all the categories with their options
+  useEffect(() => {
+    const token = localStorage.getItem('token'); // adjust key if needed
+  
+    fetch('http://localhost:8000/api/admin/filter-categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    })
+      .then(res => {
+        console.log('Response status:', res.status);
+        return res.text(); // Get raw text first
+      })
+      .then(text => {
+        console.log('Response body:', text);
+        const data = JSON.parse(text);
+        setCategories(data.categories);
+      })
+      .catch(err => console.error('Failed to fetch categories:', err));
+  }, []);
+  
 
   // Fetch villes on mount
   useEffect(() => {
@@ -64,6 +89,14 @@ export default function AddProperty() {
     setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }));
   };
 
+  // ✅ Added: handle filter change
+  const handleFilterChange = (categoryId, optionId) => {
+    setForm(prev => {
+      const updatedFilters = { ...prev.filters, [categoryId]: optionId };
+      return { ...prev, filters: updatedFilters };
+    });
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
     const formData = new FormData();
@@ -75,7 +108,11 @@ export default function AddProperty() {
     formData.append('quartier_id', form.quartier_id || '');
     formData.append('rent_price', form.rent_price || 0);
     formData.append('sale_price', form.sale_price || 0);
-    // formData.append("owner_token", localStorage.getItem("owner_token"));
+
+    // ✅ Added: send filters
+    Object.entries(form.filters).forEach(([categoryId, optionId]) => {
+      formData.append(`filters[${categoryId}]`, optionId);
+    });
 
     form.images.forEach(img => formData.append('images[]', img));
     const token  = localStorage.getItem('token');
@@ -105,6 +142,7 @@ export default function AddProperty() {
           rent_price: '',
           sale_price: '',
           images: [],
+          filters: {} // ✅ reset filters
         });
         setQuartiers([]);
       } else {
@@ -192,6 +230,23 @@ export default function AddProperty() {
             ))}
           </select>
         </div>
+
+        {/* ✅ Added: Dynamic filter categories */}
+        {categories.map(cat => (
+          <div key={cat.id}>
+            <label className="block text-slate-700 font-medium mb-2">{cat.name}</label>
+            <select
+              value={form.filters[cat.id] || ""}
+              onChange={(e) => handleFilterChange(cat.id, e.target.value)}
+              className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white"
+            >
+              <option value="">-- Choisir une option --</option>
+              {cat.active_options.map(opt => (
+                <option key={opt.id} value={opt.id}>{opt.name}</option>
+              ))}
+            </select>
+          </div>
+        ))}
 
         {/* Photos */}
         <div>
