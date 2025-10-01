@@ -620,7 +620,7 @@ function Leads() {
                 <option value="">Toutes les propriétés</option>
                 {properties.map(property => (
                   <option key={property.id} value={property.id}>
-                    {property.type} {property.chambres} chambres ({property.quartier.name}, {property.ville.name})
+                    {property.title} ({property.quartier.name}, {property.ville.name})
                   </option>
                 ))}
               </select>
