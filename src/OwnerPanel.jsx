@@ -374,7 +374,6 @@ function Leads() {
       setLeads(data.leads || []);
     } catch (err) {
       console.error("Error fetching leads:", err);
-      // You could add a toast notification here
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -462,11 +461,19 @@ function Leads() {
     });
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
   // Enhanced mask with visual appeal
   const maskInfo = (info) => {
     if (!info) return "••••••••";
-    const visibleChars = Math.floor(info.length * 0.3);
-    return "•".repeat(info.length - visibleChars) + info.slice(-visibleChars);
+    return "•".repeat(Math.min(info.length, 6));
   };
 
   // Enhanced sorting handler
@@ -481,10 +488,8 @@ function Leads() {
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return "fa-sort text-slate-400";
-    return sortConfig.direction === "asc" 
-      ? "fa-sort-up text-blue-600" 
-      : "fa-sort-down text-blue-600";
+    if (sortConfig.key !== key) return "fa-sort";
+    return sortConfig.direction === "asc" ? "fa-sort-up" : "fa-sort-down";
   };
 
   // Enhanced lead click with animation
@@ -500,7 +505,7 @@ function Leads() {
   // Enhanced unlock handler
   const handleConfirmUnlock = async () => {
     if (!leadToUnlock) return;
-
+  
     try {
       const statusResp = await fetch(
         `http://localhost:8000/api/leads/${leadToUnlock.id}/accept`,
@@ -512,28 +517,33 @@ function Leads() {
           },
         }
       );
-
+  
       const text = await statusResp.text();
       let data;
       try {
         data = JSON.parse(text);
       } catch (err) {
         console.error("Response is not JSON:", text);
-        // Add toast notification here
+        alert("Erreur serveur: réponse invalide");
         return;
       }
-
+  
       if (!statusResp.ok) {
-        // Add toast notification here
+        alert(data.message || "Erreur lors de l'acceptation du lead");
         return;
       }
-
-      setUserPoints((prev) => prev - 1);
+  
+      // ✅ set user points to the actual balance from backend
+      if (data.user && typeof data.user.balance !== "undefined") {
+        setUserPoints(data.user.balance);
+      }
+  
+      // mark lead as unlocked
       setUnlockedLeads((prev) => [...prev, leadToUnlock.id]);
-      setSelectedLead(leadToUnlock);
+      setSelectedLead(data.lead || leadToUnlock); // use backend lead if returned
       setShowConfirmation(false);
       setLeadToUnlock(null);
-
+  
       setLeads((prev) =>
         prev.map((l) =>
           l.id === leadToUnlock.id ? { ...l, status: "accepted" } : l
@@ -541,9 +551,10 @@ function Leads() {
       );
     } catch (err) {
       console.error("Error updating lead status:", err);
-      // Add toast notification here
+      alert("Erreur de connexion au serveur");
     }
   };
+  
 
   const handleRejectUnlock = () => {
     setShowConfirmation(false);
@@ -553,282 +564,344 @@ function Leads() {
   // Enhanced loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Chargement des leads...</p>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-blue-600 font-medium">Chargement des leads...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 sm:p-6">
-      <motion.div 
-        className="max-w-7xl mx-auto"
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-7xl mx-auto"
       >
-        {/* Header Section */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Gestion des Leads</h1>
-              <p className="text-slate-600 mt-1">Gérez et suivez vos prospects</p>
-            </div>
-            
-            {/* Points Display */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-2">
-                  <i className="fa-solid fa-coins text-white text-sm"></i>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Vos points</p>
-                  <p className="font-semibold text-slate-800">{userPoints} point(s)</p>
-                </div>
-              </div>
-            </div>
+        {/* Header */}
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">
+              Gestion des Leads
+            </h1>
+            <p className="text-slate-600 text-sm sm:text-base">
+              Suivez et gérez toutes vos demandes de réservation
+            </p>
           </div>
-
-          {/* Search and Controls */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 p-6 mb-6">
-            <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-              <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-                {/* Property Filter */}
-                <div className="relative flex-1 sm:flex-none">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i className="fa-solid fa-building text-slate-400"></i>
-                  </div>
-                  <select
-                    value={selectedProperty}
-                    onChange={(e) => setSelectedProperty(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-sm transition-all duration-200"
-                  >
-                    <option value="">Toutes les propriétés</option>
-                    {properties.map((property) => (
-                      <option key={property.id} value={property.id}>
-                        {property.type} {property.chambres} chambres ({property.quartier.name})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Search Input */}
-                <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i className="fa-solid fa-magnifying-glass text-slate-400"></i>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Rechercher un lead..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-sm transition-all duration-200"
-                  />
-                </div>
-              </div>
-
-              {/* Stats and Actions */}
-              <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <div className="bg-blue-100 rounded-lg p-1">
-                    <i className="fa-solid fa-chart-line text-blue-600 text-xs"></i>
-                  </div>
-                  <span className="font-medium">{filteredLeads.length} lead(s)</span>
-                </div>
-                
-                <button
-                  onClick={fetchLeads}
-                  disabled={isRefreshing}
-                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors duration-200 disabled:opacity-50"
-                >
-                  <i className={`fa-solid fa-rotate ${isRefreshing ? 'animate-spin' : ''}`}></i>
-                  <span className="text-sm">Actualiser</span>
-                </button>
-              </div>
+          <div className="flex gap-3">
+            <div className="bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-sm border border-slate-200">
+              <p className="text-xs sm:text-sm text-slate-500">Total leads</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-600">{leads.length}</p>
+            </div>
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-3 sm:px-4 py-2 sm:py-3 rounded-xl shadow-sm text-white">
+              <p className="text-xs sm:text-sm opacity-90">Vos points</p>
+              <p className="text-xl sm:text-2xl font-bold">{userPoints}</p>
             </div>
           </div>
         </div>
 
-        {/* Leads Table */}
-        <motion.div 
-          className="bg-white rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
+        {/* Search and Controls */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 p-4 sm:p-6 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+            <div className="relative w-full sm:max-w-sm">
+              {/* Property Filter */}
+              <select
+                value={selectedProperty}
+                onChange={(e) => setSelectedProperty(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              >
+                <option value="">Toutes les propriétés</option>
+                {properties.map(property => (
+                  <option key={property.id} value={property.id}>
+                    {property.type} {property.chambres} chambres ({property.quartier.name}, {property.ville.name})
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <i className="fa-solid fa-building text-slate-400 text-sm"></i>
+              </div>
+            </div>
+            
+            {/* Search Input */}
+            <div className="relative w-full sm:max-w-sm">
+              <input
+                type="text"
+                placeholder="Rechercher un lead..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <i className="fa-solid fa-magnifying-glass text-slate-400 text-sm"></i>
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                >
+                  <i className="fa-solid fa-times text-sm"></i>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
+              <i className="fa-solid fa-circle-info text-blue-500"></i>
+              <span>{filteredLeads.length} lead(s) trouvé(s)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Table Container */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          {/* Table Header */}
+          <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-4 sm:px-6 py-3 border-b border-slate-200">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <i className="fa-solid fa-table-list text-blue-500"></i>
+              Liste des Leads
+            </h2>
+          </div>
+
+          {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50/80 backdrop-blur-sm border-b border-slate-200">
-                <tr>
-                  {[
-                    { key: "name", label: "Nom" },
-                    { key: "phone", label: "Téléphone" },
-                    { key: "email", label: "Email" },
-                    { key: "created_at", label: "Date" },
-                    { key: "status", label: "Statut" }
-                  ].map(({ key, label }) => (
-                    <th
-                      key={key}
-                      className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-150"
-                      onClick={() => handleSort(key)}
-                    >
-                      <div className="flex items-center gap-1">
-                        {label}
-                        <i className={`fa ${getSortIcon(key)} ml-1`}></i>
-                      </div>
-                    </th>
-                  ))}
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th
+                    className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors whitespace-nowrap"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Lead</span>
+                      <i className={`fa-solid ${getSortIcon('name')} text-slate-400 text-xs`}></i>
+                    </div>
+                  </th>
+                  <th
+                    className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors whitespace-nowrap"
+                    onClick={() => handleSort('email')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Email</span>
+                      <i className={`fa-solid ${getSortIcon('email')} text-slate-400 text-xs`}></i>
+                    </div>
+                  </th>
+                  <th
+                    className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors whitespace-nowrap"
+                    onClick={() => handleSort('created_at')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Date</span>
+                      <i className={`fa-solid ${getSortIcon('created_at')} text-slate-400 text-xs`}></i>
+                    </div>
+                  </th>
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                    Statut
+                  </th>
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                    Action
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                <AnimatePresence>
-                  {filteredLeads.map((lead, index) => (
-                    <motion.tr
-                      key={lead.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2, delay: index * 0.02 }}
-                      className="hover:bg-slate-50/50 cursor-pointer group transition-all duration-200"
-                      onClick={() => handleLeadClick(lead)}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg p-2">
-                            <i className="fa-solid fa-user text-blue-600 text-sm"></i>
-                          </div>
-                          <span className="font-medium text-slate-800">
-                            {lead.name || "N/A"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <i className="fa-solid fa-phone text-slate-400 text-xs"></i>
-                          <span className={`font-mono ${
-                            lead.status === "accepted" || unlockedLeads.includes(lead.id)
-                              ? "text-slate-800"
-                              : "text-slate-400"
-                          }`}>
-                            {lead.status === "accepted" || unlockedLeads.includes(lead.id)
-                              ? lead.phone
-                              : maskInfo(lead.phone)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <i className="fa-solid fa-envelope text-slate-400 text-xs"></i>
-                          <span className={
-                            lead.status === "accepted" || unlockedLeads.includes(lead.id)
-                              ? "text-slate-800"
-                              : "text-slate-400"
-                          }>
-                            {lead.status === "accepted" || unlockedLeads.includes(lead.id)
-                              ? lead.email
-                              : maskInfo(lead.email)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <i className="fa-solid fa-calendar text-slate-400 text-xs"></i>
-                          <span className="text-slate-600">
-                            {formatDateTime(lead.created_at)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                            lead.status === "accepted" || unlockedLeads.includes(lead.id)
-                              ? "bg-green-50 text-green-700 border border-green-200"
-                              : "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}
-                        >
-                          <i className={`fa-solid ${
-                            lead.status === "accepted" || unlockedLeads.includes(lead.id)
-                              ? "fa-lock-open"
-                              : "fa-lock"
-                          }`}></i>
-                          {lead.status === "accepted" || unlockedLeads.includes(lead.id)
-                            ? "Débloqué"
-                            : "Bloqué"}
-                        </span>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-                
-                {filteredLeads.length === 0 && (
-                  <motion.tr
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <td colSpan="5" className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-3 text-slate-400">
-                        <i className="fa-solid fa-inbox text-4xl"></i>
-                        <p className="text-lg font-medium">Aucun lead trouvé</p>
-                        <p className="text-sm">Ajustez vos filtres pour voir plus de résultats</p>
+              <tbody className="divide-y divide-slate-200">
+                {filteredLeads.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-4 sm:px-6 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <i className="fa-solid fa-inbox text-3xl text-slate-300 mb-2"></i>
+                        <p className="text-slate-500 text-sm sm:text-base">
+                          {searchTerm ? "Aucun lead trouvé" : "Aucun lead disponible"}
+                        </p>
                       </div>
                     </td>
-                  </motion.tr>
+                  </tr>
+                ) : (
+                  filteredLeads.map((lead, index) => {
+                    const isUnlocked = lead.status === "accepted" || unlockedLeads.includes(lead.id);
+                    return (
+                      <motion.tr
+                        key={lead.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: index * 0.03 }}
+                        className="hover:bg-slate-50 transition-colors group"
+                      >
+                        <td className="px-3 sm:px-4 py-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                              <i className="fa-solid fa-user text-white text-xs"></i>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-slate-800 text-sm truncate">
+                                {isUnlocked ? (lead.name || "Inconnu") : "Lead Confidential"}
+                              </div>
+                              <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                <i className="fa-solid fa-phone text-xs"></i>
+                                <span>{isUnlocked ? lead.phone : maskInfo(lead.phone)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <i className="fa-solid fa-envelope text-slate-400 text-xs flex-shrink-0"></i>
+                            <span className="font-medium text-slate-800 text-sm truncate">
+                              {isUnlocked ? lead.email : maskInfo(lead.email)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3">
+                          <div className="space-y-1">
+                            <div className="text-xs text-slate-700">
+                              {formatDate(lead.created_at)}
+                            </div>
+                            {lead.date_reservation && (
+                              <div className="text-xs text-slate-500 flex items-center gap-1">
+                                <i className="fa-solid fa-calendar text-xs"></i>
+                                <span>{formatDate(lead.date_reservation)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                            isUnlocked ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            <i className={`fa-solid ${isUnlocked ? 'fa-lock-open' : 'fa-lock'} text-xs`}></i>
+                            {isUnlocked ? 'Déverrouillé' : 'Verrouillé'}
+                          </span>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3">
+                          <button
+                            onClick={() => handleLeadClick(lead)}
+                            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all text-xs sm:text-sm ${
+                              isUnlocked 
+                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
+                                : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-sm'
+                            }`}
+                          >
+                            <i className={`fa-solid ${isUnlocked ? 'fa-eye' : 'fa-key'} text-xs`}></i>
+                            {isUnlocked ? 'Voir' : 'Déverrouiller'}
+                          </button>
+                        </td>
+                      </motion.tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
-        </motion.div>
+        </div>
+      </motion.div>
 
-        {/* Unlock Confirmation Modal */}
-        <AnimatePresence>
-          {showConfirmation && leadToUnlock && (
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {showConfirmation && leadToUnlock && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={handleRejectUnlock}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-sm w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
-              >
-                <div className="text-center mb-6">
-                  <div className="bg-amber-100 rounded-full p-3 inline-flex mb-4">
-                    <i className="fa-solid fa-lock-open text-amber-600 text-xl"></i>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                    Débloquer ce lead ?
-                  </h3>
-                  <p className="text-slate-600 text-sm">
-                    Cela coûtera 1 point. Vous aurez accès aux coordonnées complètes de {leadToUnlock.name}.
-                  </p>
+              <div className="p-6 text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fa-solid fa-key text-blue-600 text-xl"></i>
                 </div>
-                
-                <div className="flex gap-3">
+                <h3 className="text-lg font-bold text-slate-800 mb-2">
+                  Déverrouiller le Lead ?
+                </h3>
+                <p className="mb-4 text-slate-600 text-sm">
+                  Cela déduira <strong className="text-blue-600">1 point</strong> de votre solde.
+                </p>
+                <div className="flex justify-center gap-2">
                   <button
                     onClick={handleRejectUnlock}
-                    className="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors duration-200 font-medium"
+                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium text-sm"
                   >
                     Annuler
                   </button>
                   <button
                     onClick={handleConfirmUnlock}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg shadow-blue-500/25"
+                    disabled={userPoints <= 0}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm"
                   >
-                    Débloquer (1pt)
+                    Confirmer
                   </button>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Lead Details Modal */}
+      <AnimatePresence>
+        {selectedLead && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => setSelectedLead(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-sm w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 sm:p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <i className="fa-solid fa-user-circle text-blue-500"></i>
+                  Détails du Lead
+                </h3>
+              </div>
+              <div className="p-4 sm:p-6 space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500">Nom</p>
+                    <p className="font-medium text-slate-800 text-sm">{selectedLead.name || "Inconnu"}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500">Email</p>
+                    <p className="font-medium text-slate-800 text-sm">{selectedLead.email}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500">Téléphone</p>
+                    <p className="font-medium text-slate-800 text-sm">{selectedLead.phone}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500">Date de réservation</p>
+                    <p className="font-medium text-slate-800 text-sm">{formatDateTime(selectedLead.date_reservation)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 sm:p-6 border-t border-slate-200">
+                <button
+                  className="w-full px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium text-sm"
+                  onClick={() => setSelectedLead(null)}
+                >
+                  Fermer
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
