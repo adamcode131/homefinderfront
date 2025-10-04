@@ -1,6 +1,51 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function Home() {
+
+  const [query,setQuery] = useState('');  
+
+const handelSearch = async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch('https://n8n.manypilots.com/webhook-test/search', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        chatInput: query,
+        token: localStorage.getItem('token')
+      })
+    });
+
+    const text = await res.text(); // get raw response body
+    if (!text) {
+      console.warn("Empty response body");
+      return;
+    }
+
+    try {
+      const data = JSON.parse(text); // try parsing JSON
+      console.log("Parsed JSON:", data);
+    } catch (err) {
+      console.warn("Response is not valid JSON:", text);
+    }
+
+    if (res.ok) {
+      console.log("Request success");
+    } else {
+      console.log("Request failed");
+    }
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+};
+
+
   return (
     <div id="main-container" className="min-h-[900px] bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header */}
@@ -87,8 +132,8 @@ export default function Home() {
               <div className="pl-8 pr-4">
                 <i className="fa-solid fa-search text-slate-400 text-xl group-focus-within:text-blue-500 transition-colors duration-200"></i>
               </div>
-              <input type="text" placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" className="flex-1 py-6 px-3 text-xl text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" />
-              <button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium">
+              <input onChange={(e)=>setQuery(e.target.value)} type="text" placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" className="flex-1 py-6 px-3 text-xl text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" />
+              <button onClick={handelSearch} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium">
                 <i className="fa-solid fa-search mr-2"></i>Search
               </button>
             </div>
