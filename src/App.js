@@ -17,6 +17,7 @@ import LoginUser from "./LoginUser";
 import SignUpTest from "./TEST/SignUpTest.jsx";
 import LoginTest from "./TEST/LoginTest.jsx";
 import ResultDetails from "./ResultDetails.jsx";
+import Loading from "./Loading.jsx";
 
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
                 <BrowserRouter>
                     <Routes>
                         <Route path="/" element={<Home />} /> 
+                        <Route path="/loading" element={<Loading />} />
                         <Route path="/result" element={<Result />} />
                         <Route path="/addproperty" element={
                             <ProtectedRoute allowedRoles={["owner"]}>

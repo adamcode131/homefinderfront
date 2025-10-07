@@ -7,6 +7,7 @@ export default function ResultDetails() {
   const [property, setProperty] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Token check
   const token = localStorage.getItem("token");
@@ -26,17 +27,138 @@ export default function ResultDetails() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.post(
           `http://localhost:8000/api/details/${propertyId}`
         );
         setProperty(response.data.property);
       } catch (error) {
         console.error("Failed to fetch property details:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchProperty();
   }, [propertyId]);
+
+  // Skeleton Loading Component
+  const SkeletonLoader = () => (
+    <div className="bg-gray-50 font-sans min-h-screen">
+      {/* Header Skeleton */}
+      <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex-shrink-0">
+              <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="flex-1 max-w-2xl mx-8">
+              <div className="w-full h-12 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="w-20 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-16 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-24 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Skeleton */}
+      <main className="pt-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Breadcrumb Skeleton */}
+          <nav className="mb-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-40 h-4 bg-gray-300 rounded animate-pulse"></div>
+            </div>
+          </nav>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Property Gallery Skeleton */}
+            <section className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <div className="relative h-96 bg-gray-200 animate-pulse"></div>
+                {/* Thumbnails Skeleton */}
+                <div className="flex gap-2 p-4 overflow-x-auto">
+                  {[...Array(4)].map((_, index) => (
+                    <div
+                      key={index}
+                      className="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-lg animate-pulse"
+                    ></div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Property Info Skeleton */}
+              <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-gray-100">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex-1">
+                    <div className="w-3/4 h-8 bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="w-1/2 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="w-32 h-12 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {[...Array(4)].map((_, index) => (
+                    <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse mx-auto mb-2"></div>
+                      <div className="w-12 h-6 bg-gray-200 rounded animate-pulse mx-auto mb-1"></div>
+                      <div className="w-16 h-4 bg-gray-200 rounded animate-pulse mx-auto"></div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mb-8">
+                  <div className="w-32 h-6 bg-gray-200 rounded animate-pulse mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="w-full h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="w-full h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="w-3/4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Booking Sidebar Skeleton */}
+            <aside className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 sticky top-24">
+                <div className="text-center mb-6">
+                  <div className="w-32 h-10 bg-gray-200 rounded animate-pulse mx-auto mb-1"></div>
+                  <div className="w-16 h-4 bg-gray-200 rounded animate-pulse mx-auto"></div>
+                </div>
+
+                <div className="mb-6">
+                  <div className="w-48 h-6 bg-gray-200 rounded animate-pulse mx-auto mb-4"></div>
+                  <div className="w-64 h-4 bg-gray-200 rounded animate-pulse mx-auto"></div>
+                </div>
+
+                {/* Form Skeleton */}
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, index) => (
+                    <div key={index}>
+                      <div className="w-24 h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                      <div className="w-full h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+                    </div>
+                  ))}
+                  <div className="w-full h-14 bg-gray-200 rounded-lg animate-pulse"></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+
+  if (isLoading) {
+    return <SkeletonLoader />;
+  }
 
   if (!property) {
     return <div className="text-center py-20">Loading property details...</div>;
@@ -252,7 +374,7 @@ export default function ResultDetails() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <i className="fa-solid fa-bed text-blue-600 text-xl mb-2"></i>
-                    <div className="font-semibold text-gray-900">{property.chambres}</div>
+                    <div className="font-semibold text-gray-900">{property.filterOptions?.slug}</div>
                     <div className="text-sm text-gray-600">Chambres</div>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">

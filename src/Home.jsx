@@ -1,15 +1,31 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Home() {
 
   const [query,setQuery] = useState('');  
+  const [propertyIds, setPropertyIds] = useState([]); 
+  const [isSearching, setIsSearching] = useState(false);
 
-const handelSearch = async (e) => {
-  e.preventDefault();
+  const navigate = useNavigate();
 
-  try {
-    const res = await fetch('https://n8n.manypilots.com/webhook-test/search', {
+  
+  const handleSearch = (e) => {
+    e.preventDefault();
+    
+    if (!query.trim()) return;
+    
+    // Show loading immediately
+    setIsSearching(true);
+    navigate('/loading', { 
+      state: { 
+        searchQuery: query,
+        timestamp: Date.now() // Prevent caching
+      } 
+    });
+
+    // Then make the API call
+    fetch('https://n8n.manypilots.com/webhook/search', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json'
@@ -19,31 +35,30 @@ const handelSearch = async (e) => {
         chatInput: query,
         token: localStorage.getItem('token')
       })
-    });
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Received:", data);
+        const ids = data.ids || [];
+        // Navigate to results with the data
+        navigate('/result', { 
+          state: { 
+            propertyIds: ids,
+            searchQuery: query 
+          } 
+        });
+      })
+      .catch(err => {
+        console.error("Fetch error:", err);
+        // If error, redirect back to home or show error
+        navigate('/', { state: { error: "Search failed. Please try again." } });
+      })
+      .finally(() => {
+        setIsSearching(false);
+      });
+  };
 
-    const text = await res.text(); // get raw response body
-    if (!text) {
-      console.warn("Empty response body");
-      return;
-    }
 
-    try {
-      const data = JSON.parse(text); // try parsing JSON
-      console.log("Parsed JSON:", data);
-    } catch (err) {
-      console.warn("Response is not valid JSON:", text);
-    }
-
-    if (res.ok) {
-      console.log("Request success");
-    } else {
-      console.log("Request failed");
-    }
-
-  } catch (error) {
-    console.error("Fetch error:", error);
-  }
-};
 
 
   return (
@@ -76,14 +91,7 @@ const handelSearch = async (e) => {
 
           {/* Owner Section */}
 <div className="flex items-center gap-4">
-  {/* Language Selector */}
-  <div className="relative">
-    <select className="bg-white/90 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md">
-      <option value="fr">🇫🇷 FR</option>
-      <option value="en">🇺🇸 EN</option>
-      <option value="ar">🇲🇦 AR</option>
-    </select>
-  </div>
+
 
   {/* Auth Buttons */}
   <div className="flex gap-3">
@@ -133,7 +141,7 @@ const handelSearch = async (e) => {
                 <i className="fa-solid fa-search text-slate-400 text-xl group-focus-within:text-blue-500 transition-colors duration-200"></i>
               </div>
               <input onChange={(e)=>setQuery(e.target.value)} type="text" placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" className="flex-1 py-6 px-3 text-xl text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" />
-              <button onClick={handelSearch} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium">
+              <button onClick={handleSearch} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium">
                 <i className="fa-solid fa-search mr-2"></i>Search
               </button>
             </div>
@@ -215,3 +223,4 @@ const handelSearch = async (e) => {
     </div>
   );
 }
+
