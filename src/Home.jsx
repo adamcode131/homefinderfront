@@ -44,7 +44,8 @@ export default function Home() {
         navigate('/result', { 
           state: { 
             propertyIds: ids,
-            searchQuery: query 
+            searchQuery: query ,
+            
           } 
         });
       })

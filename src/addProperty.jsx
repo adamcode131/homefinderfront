@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 export default function AddProperty() {
   const [form, setForm] = useState({
     title: '',
-    //type: '',
     ville_id: '',      // store ville ID
     quartier_id: '',   // store quartier ID
     description: '',
@@ -101,7 +100,6 @@ export default function AddProperty() {
     e.preventDefault();
     const formData = new FormData();
     formData.append('title', form.title);
-    formData.append('type', form.type);
     formData.append('intention', form.intention);
     formData.append('description', form.description);
     formData.append('ville_id', form.ville_id);
@@ -134,7 +132,6 @@ export default function AddProperty() {
         // Reset form
         setForm({
           title: '',
-          type: '',
           ville_id: '',
           quartier_id: '',
           description: '',
@@ -176,23 +173,6 @@ export default function AddProperty() {
           />
         </div>
 
-        {/* Type */}
-        <div>
-          <label htmlFor="type" className="block text-slate-700 font-medium mb-2">Type</label>
-          <select
-            name="type"
-            id="type"
-            value={form.type}
-            onChange={handleChange}
-            required
-            className="w-full px-5 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-lg bg-white"
-          >
-            <option value="">-- Sélectionner le type --</option>
-            {['Appartement','Villa','Maison','Studio','Duplex','Terrain','Bureau','Local Commercial','Chambre'].map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
 
         {/* Ville */}
         <div>

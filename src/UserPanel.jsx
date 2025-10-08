@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function UserPanel() {
   const [section, setSection] = useState('mes-demandes');
+  const [properties,setProperties] = useState();
   const navigate = useNavigate();
 const [profile, setProfile] = useState({
   name: '',
@@ -51,11 +52,17 @@ const [profile, setProfile] = useState({
 
   const [demandes, setDemandes] = useState([]);
 
-  useEffect(()=>{
-    fetch('http://localhost:8000/api/all_leads',{headers : {'Authorization': `Bearer ${localStorage.getItem('token')}`}}) 
-    .then(res => res.json())
-    .then(data => setDemandes(data.leads))
-  },[]) 
+    useEffect(() => {
+      fetch('http://localhost:8000/api/all_leads', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Fetched data:", data); // <-- log here
+        setDemandes(data.leads);
+      });
+    }, []);
+
 
   
 

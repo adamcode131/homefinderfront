@@ -69,7 +69,7 @@ export default function App() {
                         <Route path="/login_user" element={<LoginUser/>}/>
 
                         
-                        <Route path="/details/:propertyId" element={<ResultDetails/>} />
+                        <Route path="/details/:slug" element={<ResultDetails/>} />
 
 
                     </Routes>

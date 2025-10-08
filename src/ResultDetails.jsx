@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 export default function ResultDetails() {
-  const { propertyId } = useParams();
+  const { slug } = useParams();
   const [property, setProperty] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); 
+  const[categories,setCategories] = useState([]);
+  const [isSearching,setIsSearching] = useState(false);
+  const[query,setQuery] = useState();
+
+  const navigate = useNavigate();
 
   // Token check
   const token = localStorage.getItem("token");
@@ -29,9 +34,10 @@ export default function ResultDetails() {
       try {
         setIsLoading(true);
         const response = await axios.post(
-          `http://localhost:8000/api/details/${propertyId}`
+          `http://localhost:8000/api/details/${slug}`
         );
         setProperty(response.data.property);
+        console.log(response.data.property);
       } catch (error) {
         console.error("Failed to fetch property details:", error);
       } finally {
@@ -40,7 +46,65 @@ export default function ResultDetails() {
     };
 
     fetchProperty();
-  }, [propertyId]);
+  }, [slug]);
+
+    useEffect(()=>{
+    fetch('http://localhost:8000/api/admin/filter-categories', { method: 'GET' })
+    .then(res => res.json())
+    .then(data => setCategories(data))
+  },[]) 
+
+
+    // search bar function logic
+
+    const handleSearch = (e) => {
+    e.preventDefault();
+    
+    if (!query.trim()) return;
+    
+    // Show loading immediately
+    setIsSearching(true);
+    navigate('/loading', { 
+      state: { 
+        searchQuery: query,
+        timestamp: Date.now() // Prevent caching
+      } 
+    });
+
+    // Then make the API call
+    fetch('https://n8n.manypilots.com/webhook/search', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        chatInput: query,
+        token: localStorage.getItem('token')
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Received:", data);
+        const ids = data.ids || [];
+        // Navigate to results with the data
+        navigate('/result', { 
+          state: { 
+            propertyIds: ids,
+            searchQuery: query ,
+            
+          } 
+        });
+      })
+      .catch(err => {
+        console.error("Fetch error:", err);
+        // If error, redirect back to home or show error
+        navigate('/', { state: { error: "Search failed. Please try again." } });
+      })
+      .finally(() => {
+        setIsSearching(false);
+      });
+  };
 
   // Skeleton Loading Component
   const SkeletonLoader = () => (
@@ -190,7 +254,7 @@ export default function ResultDetails() {
         "http://localhost:8000/api/leads",
         {
           ...formData,
-          properties: [propertyId],
+          properties: [slug], // changed slug to Slug
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -217,7 +281,7 @@ export default function ResultDetails() {
  
   const handleSubmit2 =(e)=>{
     e.preventDefault()
-    fetch(`http://localhost:8000/api/addLead/${propertyId}`, {
+    fetch(`http://localhost:8000/api/addLead/${slug}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -228,10 +292,14 @@ export default function ResultDetails() {
         phone: formData.phone,
         date_reservation: formData.date_reservation,
         message: formData.message,
-        properties: [propertyId]
+        properties: [slug]
       })
     })
   }
+
+
+
+
 
   return (
     <div className="bg-gray-50 font-sans min-h-screen">
@@ -240,15 +308,17 @@ export default function ResultDetails() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex-shrink-0">
-              <div className="text-xl font-bold text-blue-600 flex items-center cursor-pointer">
-                <i className="fa-solid fa-home mr-2"></i>
-                PropertyAI
-              </div>
+            <Link to="/" className="text-xl font-bold text-blue-600 flex items-center cursor-pointer">
+              <i className="fa-solid fa-home mr-2"></i>
+              HomeFinder
+            </Link>
             </div>
             <div className="flex-1 max-w-2xl mx-8">
               <div className="relative">
                 <input
                   type="text"
+                  onChange={(e)=>setQuery(e.target.value)}
+                  onKeyDown={(e) =>{ if(e.key === "Enter"){handleSearch(e) } }}
                   placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier"
                   className="w-full px-4 py-3 pl-12 pr-4 text-gray-900 bg-white border-2 border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 shadow-sm"
                 />
@@ -355,12 +425,13 @@ export default function ResultDetails() {
 
               {/* Property Info */}
               <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-gray-100">
+                {/* Header section */}
                 <div className="flex items-start justify-between mb-6">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">{property.title}</h1>
                     <p className="text-gray-600 flex items-center">
                       <i className="fa-solid fa-location-dot mr-2 text-blue-600"></i>
-                      {property.ville.name}, {property.quartier.name}
+                      {property.ville?.name}, {property.quartier?.name}
                     </p>
                   </div>
                   <div className="text-right">
@@ -372,33 +443,54 @@ export default function ResultDetails() {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <i className="fa-solid fa-bed text-blue-600 text-xl mb-2"></i>
-                    <div className="font-semibold text-gray-900">{property.filterOptions?.slug}</div>
-                    <div className="text-sm text-gray-600">Chambres</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <i className="fa-solid fa-couch text-blue-600 text-xl mb-2"></i>
-                    <div className="font-semibold text-gray-900">{property.salons}</div>
-                    <div className="text-sm text-gray-600">Salon</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <i className="fa-solid fa-ruler-combined text-blue-600 text-xl mb-2"></i>
-                    <div className="font-semibold text-gray-900">{property.surface}</div>
-                    <div className="text-sm text-gray-600">m²</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <i className="fa-solid fa-check-circle text-green-500 text-xl mb-2"></i>
-                    <div className="font-semibold text-gray-900">{property.meuble ? "Oui" : "Non"}</div>
-                    <div className="text-sm text-gray-600">Meublé</div>
-                  </div>
+                  {property.filter_options && property.filter_options.length > 0 ? (
+                    property.filter_options.map((option, index) => {
+                      // Pick an icon dynamically depending on category name or slug
+                      const icon = option.slug.includes('chambre')
+                        ? 'fa-bed'
+                        : option.slug.includes('salon')
+                        ? 'fa-couch'
+                        : option.slug.includes('m2') || option.slug.includes('superficie')
+                        ? 'fa-ruler-combined'
+                        : option.slug.includes('jardin')
+                        ? 'fa-tree'
+                        : 'fa-check-circle';
+
+                      return (
+                        <div
+                          key={index}
+                          className="text-center p-4 bg-gray-50 rounded-lg hover:shadow transition"
+                        >
+                          <i className={`fa-solid ${icon} text-blue-600 text-xl mb-2`}></i>
+                          <div className="font-semibold text-gray-900">{option.name}</div>
+                          <div className="text-sm text-gray-600 capitalize">
+                            {
+                              option.slug.includes('chambre')
+                                ? 'Chambre'
+                                : option.slug.includes('salon')
+                                ? 'Salon'
+                                : option.slug.includes('m2') || option.slug.includes('superficie')
+                                ? 'Superficie'
+                                : option.slug.includes('jardin')
+                                ? 'Jardin'
+                                : 'Autre'
+                            }
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-gray-500 col-span-4 text-center">Aucun filtre disponible</div>
+                  )}
                 </div>
 
+                {/* Description */}
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
                   <p className="text-gray-700 leading-relaxed">{property.description}</p>
                 </div>
               </div>
+
             </section>
 
             {/* Booking Sidebar */}

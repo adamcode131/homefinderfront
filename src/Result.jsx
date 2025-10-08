@@ -22,6 +22,8 @@ const Result = () => {
     phone: "",
     date_reservation: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(2); // Number of items to display per page
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
@@ -40,11 +42,13 @@ const Result = () => {
         });
 
         const fetchedProperties = response.data.properties;
-        setProperties(fetchedProperties);
+        // Filter only validated properties
+        const validatedProperties = fetchedProperties.filter(property => property.is_validated === 1);
+        setProperties(validatedProperties);
 
         // Initialize current image indexes for each property
         const indexes = {};
-        fetchedProperties.forEach(property => {
+        validatedProperties.forEach(property => {
           indexes[property.id] = 0;
         });
         setCurrentImageIndexes(indexes);
@@ -58,6 +62,14 @@ const Result = () => {
 
     fetchResults();
   }, [propertyIds]);
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProperties = properties.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(properties.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const handleAddToCart = (property) => {
     setCartItems((prev) => [...prev, property]);
@@ -330,6 +342,66 @@ const Result = () => {
       });
   };
 
+  // Pagination component
+  const Pagination = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex justify-center items-center space-x-2 mt-8">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 rounded-lg border ${
+            currentPage === 1 
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+              : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+          }`}
+        >
+          <i className="fa-solid fa-chevron-left mr-2"></i>
+          Précédent
+        </motion.button>
+
+        <div className="flex space-x-1">
+          {pageNumbers.map(number => (
+            <motion.button
+              key={number}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => paginate(number)}
+              className={`px-3 py-2 rounded-lg border ${
+                currentPage === number
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+              }`}
+            >
+              {number}
+            </motion.button>
+          ))}
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 rounded-lg border ${
+            currentPage === totalPages
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+          }`}
+        >
+          Suivant
+          <i className="fa-solid fa-chevron-right ml-2"></i>
+        </motion.button>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-gray-50 font-sans min-h-screen">
       {/* Header */}
@@ -347,7 +419,7 @@ const Result = () => {
                 className="text-xl font-bold text-blue-600 flex items-center"
               >
                 <i className="fa-solid fa-home mr-2"></i>
-                Home Finder
+                <a href="/">Home Finder</a>
               </motion.div>
             </div>
             <div className="flex-1 max-w-2xl mx-8">
@@ -447,6 +519,12 @@ const Result = () => {
                     {properties.length}
                   </span>{" "}
                   propriétés trouvées
+                  <span className="text-gray-500 text-sm ml-2">
+                    (Page {currentPage} sur {totalPages})
+                  </span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  Affichage de {indexOfFirstItem + 1} à {Math.min(indexOfLastItem, properties.length)} sur {properties.length} propriétés
                 </p>
               </div>
 
@@ -455,145 +533,150 @@ const Result = () => {
                   No properties found.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {properties.map((property) => {
-                    const currentIndex = currentImageIndexes[property.id] || 0;
-                    const hasImages = property.images && property.images.length > 0;
-                    const totalImages = hasImages ? property.images.length : 0;
-                    return (
-                      <motion.div
-                        key={property.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        whileHover={{ y: -5 }}
-                        onClick={() => navigate(`/details/${property.id}`)}
-                        className="bg-white rounded-xl shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300 border border-gray-100 group cursor-pointer"
-                      >
-                        {/* Image Carousel */}
-                        <div className="h-48 relative overflow-hidden">
-                          {hasImages ? (
-                            <>
-                              <AnimatePresence mode="wait">
-                                <motion.img
-                                  key={currentIndex}
-                                  variants={imageVariants}
-                                  initial="enter"
-                                  animate="center"
-                                  exit="exit"
-                                  transition={{ duration: 0.3 }}
-                                  className="w-full h-full object-cover"
-                                  src={`http://localhost:8000/storage/${property.images[currentIndex].path || property.images[currentIndex].url}`}
-                                  alt={property.title}
-                                  onError={(e) => {
-                                    e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
-                                  }}
-                                />
-                              </AnimatePresence>
-
-                              {/* Navigation Arrows */}
-                              {totalImages > 1 && (
-                                <>
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      prevImage(property.id);
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {currentProperties.map((property) => {
+                      const currentIndex = currentImageIndexes[property.id] || 0;
+                      const hasImages = property.images && property.images.length > 0;
+                      const totalImages = hasImages ? property.images.length : 0;
+                      return (
+                        <motion.div
+                          key={property.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          whileHover={{ y: -5 }}
+                          onClick={() => navigate(`/details/${property.slug}`)}
+                          className="bg-white rounded-xl shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300 border border-gray-100 group cursor-pointer"
+                        >
+                          {/* Image Carousel */}
+                          <div className="h-48 relative overflow-hidden">
+                            {hasImages ? (
+                              <>
+                                <AnimatePresence mode="wait">
+                                  <motion.img
+                                    key={currentIndex}
+                                    variants={imageVariants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    transition={{ duration: 0.3 }}
+                                    className="w-full h-full object-cover"
+                                    src={`http://localhost:8000/storage/${property.images[currentIndex].path || property.images[currentIndex].url}`}
+                                    alt={property.title}
+                                    onError={(e) => {
+                                      e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found';
                                     }}
-                                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition-all z-10"
-                                  >
-                                    <i className="fa-solid fa-chevron-left text-sm"></i>
-                                  </motion.button>
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      nextImage(property.id);
-                                    }}
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition-all z-10"
-                                  >
-                                    <i className="fa-solid fa-chevron-right text-sm"></i>
-                                  </motion.button>
-                                </>
-                              )}
+                                  />
+                                </AnimatePresence>
 
-                              {/* Image Indicators */}
-                              {totalImages > 1 && (
-                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
-                                  {property.images.map((_, index) => (
-                                    <button
-                                      key={index}
+                                {/* Navigation Arrows */}
+                                {totalImages > 1 && (
+                                  <>
+                                    <motion.button
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.9 }}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        goToImage(property.id, index);
+                                        prevImage(property.id);
                                       }}
-                                      className={`w-2 h-2 rounded-full transition-all ${
-                                        index === currentIndex 
-                                          ? 'bg-white' 
-                                          : 'bg-white/50'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                              )}
+                                      className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition-all z-10"
+                                    >
+                                      <i className="fa-solid fa-chevron-left text-sm"></i>
+                                    </motion.button>
+                                    <motion.button
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.9 }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        nextImage(property.id);
+                                      }}
+                                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70 transition-all z-10"
+                                    >
+                                      <i className="fa-solid fa-chevron-right text-sm"></i>
+                                    </motion.button>
+                                  </>
+                                )}
 
-                              {/* Image Counter */}
-                              {totalImages > 1 && (
-                                <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full z-10">
-                                  {currentIndex + 1}/{totalImages}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                              <i className="fa-solid fa-image text-4xl text-gray-400"></i>
-                            </div>
-                          )}
+                                {/* Image Indicators */}
+                                {totalImages > 1 && (
+                                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
+                                    {property.images.map((_, index) => (
+                                      <button
+                                        key={index}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          goToImage(property.id, index);
+                                        }}
+                                        className={`w-2 h-2 rounded-full transition-all ${
+                                          index === currentIndex 
+                                            ? 'bg-white' 
+                                            : 'bg-white/50'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
 
-                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        </div>
+                                {/* Image Counter */}
+                                {totalImages > 1 && (
+                                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full z-10">
+                                    {currentIndex + 1}/{totalImages}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <i className="fa-solid fa-image text-4xl text-gray-400"></i>
+                              </div>
+                            )}
 
-                        <div className="p-5">
-                          <h3 className="text-gray-900 font-semibold mb-2 text-lg">
-                            {property.title}
-                          </h3>
-                          <p className="text-gray-600 text-sm mb-4 flex items-center">
-                            <i className="fa-solid fa-bed mr-2 text-blue-600"></i>
-                            {property.description}
-                          </p>
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="text-xl font-bold text-gray-900">
-                              {property.sale_price ? `${property.sale_price} DH` :  `${property.rent_price} DH`}
-                              <span className="text-sm font-normal text-gray-500">
-                                {property.sale_price === 0 ? "/mois" : "vente"}
-                              </span>
-                            </span>
-                            <span className="text-sm text-gray-500 flex items-center">
-                              <i className="fa-solid fa-location-dot mr-1 text-blue-600"></i>
-                              {property.ville?.nom || property.ville?.name || 'N/A'} - {property.quartier?.nom || property.quartier?.name || 'N/A'}
-                            </span>
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                           </div>
-                          <p className="text-sm text-gray-400 mb-3">
-                            Type: {property.type} | Intention: {property.intention}
-                          </p>
-                          <motion.button
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(property);
-                            }}
-                            className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-                          >
-                            Réservation Rapide
-                          </motion.button>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
+
+                          <div className="p-5">
+                            <h3 className="text-gray-900 font-semibold mb-2 text-lg">
+                              {property.title}
+                            </h3>
+                            <p className="text-gray-600 text-sm mb-4 flex items-center">
+                              <i className="fa-solid fa-bed mr-2 text-blue-600"></i>
+                              {property.description}
+                            </p>
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="text-xl font-bold text-gray-900">
+                                {property.sale_price ? `${property.sale_price} DH` :  `${property.rent_price} DH`}
+                                <span className="text-sm font-normal text-gray-500">
+                                  {property.sale_price === 0 ? "/mois" : "vente"}
+                                </span>
+                              </span>
+                              <span className="text-sm text-gray-500 flex items-center">
+                                <i className="fa-solid fa-location-dot mr-1 text-blue-600"></i>
+                                {property.ville?.nom || property.ville?.name || 'N/A'} - {property.quartier?.nom || property.quartier?.name || 'N/A'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-400 mb-3">
+                              Type: {property.type} | Intention: {property.intention}
+                            </p>
+                            <motion.button
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToCart(property);
+                              }}
+                              className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+                            >
+                              Réservation Rapide
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && <Pagination />}
+                </>
               )}
             </section>
 
