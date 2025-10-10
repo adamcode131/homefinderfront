@@ -8,6 +8,7 @@ export default function AdminPanel() {
   const [filter,setFilter] = useState('') ; 
   const [filteredProperties, setFilteredProperties] = useState([]) ;  
   const [users,setUsers] = useState([]) ; 
+  const [refunds,setRefunds] = useState([]); 
   // State for adding options to categories
   const [showAddOptionForm, setShowAddOptionForm] = useState({});
   const [newOption, setNewOption] = useState({
@@ -26,6 +27,8 @@ export default function AdminPanel() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCategoryEntityTypes, setNewCategoryEntityTypes] = useState(["property"]);
   const [categories, setCategories] = useState([]);
+
+  
   
   // fetch pending properties
   useEffect(() => {
@@ -44,6 +47,20 @@ export default function AdminPanel() {
         .then((resp) => resp.json())
         .then((data) => setProperties(data.properties || []))
         .catch((err) => console.error(err));
+    }
+  }, [section]);
+
+  // fetch refunds 
+
+  useEffect(() => {
+    if(section === 'refunds_demands') {
+      fetch('http://localhost:8000/api/all-refunds')
+        .then(res => res.json())
+        .then(data => {
+          console.log('Refunds:', data.refunds);
+          setRefunds(data.refunds || []);
+        })
+        .catch(err => console.error(err));
     }
   }, [section]);
 
@@ -247,7 +264,14 @@ const handleDeleteOption = async (optionId) => {
     console.error("Failed to delete option:", error.message);
     alert(error.message || "Failed to delete option. Please try again.");
   }
-};
+}; 
+
+const handleAcceptRefund = (refundId)=>{
+  fetch(`http://localhost:8000/api/accept-refund/${refundId}`,{method:'POST'  , Authorization: `Bearer ${localStorage.getItem("token")}`})
+  .then(res => res.json())
+  .then(data => console.log(data.message))
+  .catch(err => console.error(err));
+}
 
 
 
@@ -303,6 +327,16 @@ const handleDeleteOption = async (optionId) => {
             }`}
           >
             All Properties
+          </button>
+                    <button
+            onClick={() => setSection('refunds_demands')}
+            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+              section === 'refunds_demands'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Refunds Demands
           </button>
         </nav>
       </aside>
@@ -1011,6 +1045,152 @@ const handleDeleteOption = async (optionId) => {
                 </div> 
               ) : (
                 <p className="text-center text-gray-500">No categories found.</p>
+              )}
+            </div>
+          )}
+
+
+          {section === "refunds_demands" && (
+            <div className="w-full max-w-6xl mx-auto px-4 py-6">
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                  Refund Requests
+                </h1>
+                <p className="text-gray-600">Manage refund requests from users</p>
+              </div>
+
+              {refunds.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-50 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No Refund Requests</h3>
+                  <p className="text-gray-500">All refund requests have been processed.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {refunds.map((refund) => (
+                    <div 
+                      key={refund.id} 
+                      className="bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300"
+                    >
+                      {/* Compact Header */}
+                      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-gray-900 text-base">
+                              {refund.lead?.property?.title || 'Property Not Found'}
+                            </span>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              refund.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              refund.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {refund.status || 'PENDING'}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">Amount</p>
+                            <p className="text-lg font-bold text-blue-600">1 point</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compact Content */}
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          {/* Lead Info */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">Lead</span>
+                            </div>
+                            <div className="space-y-1 text-xs">
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <svg className="w-3 h-3 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                </svg>
+                                <span className="truncate">{refund.lead?.email || 'No email'}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <span>{refund.lead?.phone || 'No phone'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Owner Info */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">Owner</span>
+                            </div>
+                            <div className="space-y-1 text-xs">
+                              <div className="text-gray-900 font-medium truncate">
+                                {refund.lead?.owner?.name || 'No owner'}
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <svg className="w-3 h-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <span className="truncate">{refund.lead?.owner?.email || 'No email'}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <svg className="w-3 h-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <span>{refund.lead?.owner?.phone || 'No phone'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Refund Reason Preview */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">Reason</span>
+                            </div>
+                            <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                              {refund.reason}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Compact Action Buttons */}
+                        <div className="flex gap-3 pt-3 border-t border-gray-100">
+                          <button 
+                            onClick={() => handleAcceptRefund(refund.id)}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-white transition-all bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-200 text-sm"
+                          >
+                            <i className="fa-solid fa-check text-xs"></i>
+                            Accept
+                          </button>
+
+                          <button className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-white transition-all bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 focus:outline-none focus:ring-2 focus:ring-red-200 text-sm">
+                            <i className="fa-solid fa-xmark text-xs"></i>
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}

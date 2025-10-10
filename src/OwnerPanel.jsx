@@ -347,6 +347,7 @@ function Leads() {
   const [leadToUnlock, setLeadToUnlock] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
   const [unlockedLeads, setUnlockedLeads] = useState([]);
+  const [reasons,setReasons] = useState();
   const [sortConfig, setSortConfig] = useState({
     key: "created_at",
     direction: "desc",
@@ -354,6 +355,15 @@ function Leads() {
   const [properties, setProperties] = useState([]);
   const [selectedProperty, setSelectedProperty] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [selectedLeadId, setSelectedLeadId] = useState(null);
+  const [refundReason, setRefundReason] = useState("");
+  
+  useEffect(()=>{
+    fetch('http://localhost:8000/api/refund-reasons')
+    .then(res => res.json())
+    .then(data => setReasons(data.reasons)) 
+  },[]) 
 
   // Enhanced fetch with better error handling
   const fetchLeads = async () => {
@@ -575,7 +585,40 @@ function Leads() {
         </div>
       </div>
     );
-  }
+  }  
+
+  const openRefundModal = (leadId) => {
+    setSelectedLeadId(leadId);
+    setShowRefundModal(true);
+  };
+
+  const handleRefund = async () => {
+    if (!refundReason.trim()) {
+      alert("Please select or enter a reason.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/refund/${selectedLeadId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // if you use auth
+        },
+        body: JSON.stringify({ reason: refundReason }),
+      });
+
+      const data = await res.json();
+      alert(data.message || "Refund sent successfully");
+      setShowRefundModal(false);
+      setRefundReason("");
+    } catch (err) {
+      console.error(err);
+      alert("Error submitting refund");
+    }
+  }; 
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
@@ -701,10 +744,10 @@ function Leads() {
                     </div>
                   </th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                    Statut
+                    Action
                   </th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                    Action
+                    Refund
                   </th>
                 </tr>
               </thead>
@@ -767,15 +810,7 @@ function Leads() {
                               </div>
                             )}
                           </div>
-                        </td>
-                        <td className="px-3 sm:px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            isUnlocked ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
-                          }`}>
-                            <i className={`fa-solid ${isUnlocked ? 'fa-lock-open' : 'fa-lock'} text-xs`}></i>
-                            {isUnlocked ? 'Déverrouillé' : 'Verrouillé'}
-                          </span>
-                        </td>
+                        </td>                        
                         <td className="px-3 sm:px-4 py-3">
                           <button
                             onClick={() => handleLeadClick(lead)}
@@ -788,13 +823,97 @@ function Leads() {
                             <i className={`fa-solid ${isUnlocked ? 'fa-eye' : 'fa-key'} text-xs`}></i>
                             {isUnlocked ? 'Voir' : 'Déverrouiller'}
                           </button>
+                        </td> 
+                        <td className="px-3 sm:px-4 py-3">
+                          <span>
+                            <button
+                              onClick={() => openRefundModal(lead.id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all text-xs sm:text-sm bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-sm"
+                            >
+                              <i className="fa-solid fa-rotate-left text-xs"></i>
+                              Refund
+                            </button>                          
+                        </span>
                         </td>
                       </motion.tr>
                     );
                   })
                 )}
               </tbody>
-            </table>
+            </table> 
+            {/* show */}
+              {showRefundModal && (
+                <AnimatePresence>
+                  <motion.div
+                    className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowRefundModal(false)}
+                  />
+
+                  <motion.div
+                    initial={{ x: "100%" }}
+                    animate={{ x: 0 }}
+                    exit={{ x: "100%" }}
+                    transition={{ type: "spring", stiffness: 80, damping: 20 }}
+                    className="fixed right-0 top-0 h-full w-full sm:w-[500px] bg-white shadow-2xl z-50 flex flex-col p-6 overflow-y-auto"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-semibold text-gray-800">Refund Request</h3>
+                      <button
+                        onClick={() => setShowRefundModal(false)}
+                        className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                      >
+                        &times;
+                      </button>
+                    </div>
+
+                    <label className="block text-sm mb-2 font-medium text-slate-700">
+                      Select a reason
+                    </label>
+
+                    <select
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg p-2 mb-4 text-sm"
+                    >
+                      <option value="">Select a reason</option>
+                      <option value="Invalid contact information">Invalid contact information</option>
+                      <option value="Wrong person">Wrong person</option>
+                      <option value="Duplicate lead">Duplicate lead</option>
+                      <option value="Fake lead">Fake lead</option>
+                      <option value="Incomplete details">Incomplete details</option>
+                      <option value="Lead sold to multiple owners">Lead sold to multiple owners</option>
+                      <option value="Lead already closed">Lead already closed</option>
+                    </select>
+
+
+                    {refundReason === "Other" && (
+                      <textarea
+                        placeholder="Enter details..."
+                        className="w-full border border-gray-300 rounded-lg p-2 mb-4 text-sm"
+                        onChange={(e) => setRefundReason(e.target.value)}
+                      />
+                    )}
+
+                    <div className="flex justify-end gap-2 mt-auto">
+                      <button
+                        className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+                        onClick={() => setShowRefundModal(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+                        onClick={handleRefund}
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              )}
           </div>
         </div>
       </motion.div>
