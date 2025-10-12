@@ -6,20 +6,22 @@ export default function Home() {
   const [query,setQuery] = useState('');  
   const [propertyIds, setPropertyIds] = useState([]); 
   const [isSearching, setIsSearching] = useState(false);
+  const [filter,setFilter] = useState('');
 
   const navigate = useNavigate();
 
   
-  const handleSearch = (e) => {
-    e.preventDefault();
+  const handleSearch = (param) => {
+    // e.preventDefault();
+    const search  = query || param;
     
-    if (!query.trim()) return;
+    if (!search?.trim()) return;
     
     // Show loading immediately
     setIsSearching(true);
     navigate('/loading', { 
       state: { 
-        searchQuery: query,
+        searchQuery: search,
         timestamp: Date.now() // Prevent caching
       } 
     });
@@ -32,7 +34,7 @@ export default function Home() {
       },
       method: 'POST',
       body: JSON.stringify({
-        chatInput: query,
+        chatInput: search,
         token: localStorage.getItem('token')
       })
     })
@@ -44,7 +46,7 @@ export default function Home() {
         navigate('/result', { 
           state: { 
             propertyIds: ids,
-            searchQuery: query ,
+            searchQuery: search ,
             
           } 
         });
@@ -153,17 +155,17 @@ export default function Home() {
           </p>
           {/* Quick Suggestions */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
-            <button className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-bed mr-2 text-blue-500"></i>2 Bedrooms
+            <button onClick={()=>{handleSearch("1 Chambre") }} className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
+              <i className="fa-solid fa-bed mr-2 text-blue-500"></i>1 Chambre
             </button>
-            <button className="suggestion-pulse bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-green-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-location-dot mr-2 text-green-500"></i>Gauthier
+            <button onClick={()=>{handleSearch("Maarif")}} className="suggestion-pulse bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-green-300 transition-all duration-200 shadow-md hover:shadow-lg">
+              <i className="fa-solid fa-location-dot mr-2 text-green-500"></i>Maarif
             </button>
-            <button className="suggestion-pulse bg-white hover:bg-yellow-50 text-slate-700 hover:text-yellow-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-coins mr-2 text-yellow-500"></i>Under 5000 DH
+            <button onClick={()=>{handleSearch("moins de 5000dh")}} className="suggestion-pulse bg-white hover:bg-yellow-50 text-slate-700 hover:text-yellow-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
+              <i className="fa-solid fa-coins mr-2 text-yellow-500"></i>Moins de 5000 DH
             </button>
-            <button className="suggestion-pulse bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-car mr-2 text-purple-500"></i>With Parking
+            <button onClick={()=>{handleSearch("plus de 200metre")}} className="suggestion-pulse bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg">
+              <i className="fa-solid fa-car mr-2 text-purple-500"></i>Plus de 200 métre carré
             </button>
           </div>
         </div>
