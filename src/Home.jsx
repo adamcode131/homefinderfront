@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Home() {
@@ -7,6 +7,8 @@ export default function Home() {
   const [propertyIds, setPropertyIds] = useState([]); 
   const [isSearching, setIsSearching] = useState(false);
   const [filter,setFilter] = useState('');
+  const [suggestions,setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const navigate = useNavigate();
 
@@ -19,6 +21,7 @@ export default function Home() {
     
     // Show loading immediately
     setIsSearching(true);
+    setShowSuggestions(false);
     navigate('/loading', { 
       state: { 
         searchQuery: search,
@@ -61,7 +64,39 @@ export default function Home() {
       });
   };
 
+    useEffect(() => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
 
+    const timeout = setTimeout(async () => {
+      const res = await fetch(`http://localhost:8000/api/search-suggestions?q=${query}`);
+      const data = await res.json();
+      setSuggestions(data);
+      setShowSuggestions(data.length > 0);
+    }, 300); // debounce
+
+    return () => clearTimeout(timeout);
+  }, [query]);
+
+  const handleSuggestionClick = (suggestionName) => {
+    setQuery(suggestionName);
+    setShowSuggestions(false);
+    setSuggestions([]);
+  };
+
+  const handleInputFocus = () => {
+    if (suggestions.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay hiding to allow for click events
+    setTimeout(() => setShowSuggestions(false), 200);
+  };
 
 
   return (
@@ -77,7 +112,7 @@ export default function Home() {
             <i className="fa-solid fa-home text-white text-lg"></i>
           </div>
           <span className="ml-3 text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-            HomeFinder
+            NestYours
           </span>
         </div>
 
@@ -131,7 +166,7 @@ export default function Home() {
               <i className="fa-solid fa-home text-white text-3xl"></i>
             </div>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">HomeFinder</h1>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">NestYours</h1>
           <p className="text-slate-500 text-lg font-light">Powered by Artificial Intelligence</p>
         </div>
 
@@ -143,11 +178,52 @@ export default function Home() {
               <div className="pl-8 pr-4">
                 <i className="fa-solid fa-search text-slate-400 text-xl group-focus-within:text-blue-500 transition-colors duration-200"></i>
               </div>
-              <input onChange={(e)=>setQuery(e.target.value)} type="text" placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" className="flex-1 py-6 px-3 text-xl text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" />
+              <input 
+                onChange={(e)=>setQuery(e.target.value)} 
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                value={query}
+                type="text" 
+                placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" 
+                className="flex-1 py-6 px-3 text-xl text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" 
+              />
               <button onClick={handleSearch} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium">
                 <i className="fa-solid fa-search mr-2"></i>Search
               </button>
             </div>
+            
+            {/* Enhanced Suggestions Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-2xl mt-2 shadow-2xl z-50 overflow-hidden">
+                <div className="py-2">
+                  {suggestions.map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center px-6 py-4 hover:bg-blue-50 cursor-pointer transition-all duration-150 group border-b border-slate-100 last:border-b-0"
+                      onClick={() => handleSuggestionClick(s.name)}
+                    >
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4 group-hover:bg-blue-200 transition-colors duration-150">
+                        <i className="fa-solid fa-magnifying-glass text-blue-600 text-sm"></i>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-slate-800 font-medium text-lg group-hover:text-blue-700 transition-colors duration-150">
+                          {s.name}
+                        </div>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                        <i className="fa-solid fa-arrow-right text-blue-500 text-lg"></i>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-slate-50 px-6 py-3 border-t border-slate-200">
+                  <div className="text-slate-500 text-sm flex items-center">
+                    <i className="fa-solid fa-lightbulb text-yellow-500 mr-2"></i>
+                    Press Enter to search for "{query}"
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           {/* Tagline */}
           <p className="text-center text-slate-600 text-xl mb-12 font-light">
@@ -209,7 +285,7 @@ export default function Home() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
                 <i className="fa-solid fa-home text-white text-sm"></i>
               </div>
-              <span className="text-xl font-semibold text-slate-800">HomeFinder</span>
+              <span className="text-xl font-semibold text-slate-800">NestYours</span>
             </div>
             <div className="flex items-center space-x-8 text-sm text-slate-600 mb-6 md:mb-0">
               <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">About</span>
@@ -218,7 +294,7 @@ export default function Home() {
               <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">Contact</span>
             </div>
             <div className="text-sm text-slate-500 font-light">
-              © 2025 HomeFinder. All rights reserved.
+              © 2025 NestYours. All rights reserved.
             </div>
           </div>
         </div>
@@ -226,4 +302,3 @@ export default function Home() {
     </div>
   );
 }
-

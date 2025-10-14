@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import axios from 'axios'; 
 import {motion, AnimatePresence } from "framer-motion";
+import ContactOwner from './ContactOwner.jsx';
 
 
 
@@ -746,9 +747,7 @@ function Leads() {
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
                     Action
                   </th>
-                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                    Refund
-                  </th>
+
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -824,17 +823,6 @@ function Leads() {
                             {isUnlocked ? 'Voir' : 'Déverrouiller'}
                           </button>
                         </td> 
-                        <td className="px-3 sm:px-4 py-3">
-                          <span>
-                            <button
-                              onClick={() => openRefundModal(lead.id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all text-xs sm:text-sm bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-sm"
-                            >
-                              <i className="fa-solid fa-rotate-left text-xs"></i>
-                              Refund
-                            </button>                          
-                        </span>
-                        </td>
                       </motion.tr>
                     );
                   })
@@ -1081,6 +1069,16 @@ export default function OwnerPanel() {
           >
             Leads
           </button>
+                    <button
+            onClick={() => setMainSection('contact')}
+            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+              mainSection === 'contact'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Contact
+          </button>
         </nav>
       </aside>
       {/* Main Content */}
@@ -1108,7 +1106,9 @@ export default function OwnerPanel() {
                 }`}
               >
                 Ajouter
-              </button>
+              </button> 
+
+              
             </div>
             {/* Subsection Content */}
             <div>
@@ -1118,7 +1118,8 @@ export default function OwnerPanel() {
           </div>
         )}
         {mainSection === 'balance' && <Balance />}
-        {mainSection === 'leads' && <Leads />}
+        {mainSection === 'leads' && <Leads />} 
+        {mainSection === 'contact' && <ContactOwner/>}
       </main>
     </div>
   );

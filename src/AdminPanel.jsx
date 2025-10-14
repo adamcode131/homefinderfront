@@ -328,7 +328,7 @@ const handleAcceptRefund = (refundId)=>{
           >
             All Properties
           </button>
-                    <button
+          <button
             onClick={() => setSection('refunds_demands')}
             className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
               section === 'refunds_demands'
@@ -337,6 +337,17 @@ const handleAcceptRefund = (refundId)=>{
             }`}
           >
             Refunds Demands
+          </button>
+
+          <button
+            onClick={() => setSection('import_villes')}
+            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+              section === 'import_villes'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Import Villes
           </button>
         </nav>
       </aside>
@@ -1194,6 +1205,17 @@ const handleAcceptRefund = (refundId)=>{
               )}
             </div>
           )}
+
+          {
+            section === "import_villes" && (
+              <div>
+                <form action="https://n8n.manypilots.com/webhook/research-finetuning" method="POST"> 
+                  <input type="file" /> 
+                  <input type="submit" value="Import" />
+                </form>
+              </div>
+            )
+          }
 
 
 
