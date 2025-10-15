@@ -9,6 +9,16 @@ export default function AdminPanel() {
   const [filteredProperties, setFilteredProperties] = useState([]) ;  
   const [users,setUsers] = useState([]) ; 
   const [refunds,setRefunds] = useState([]); 
+  // VIEW PROFILE
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [editUserData, setEditUserData] = useState({
+    name: '',
+    email: '',
+    role: '',
+    isActive: false,
+    isAdmin: false
+  });
   // State for adding options to categories
   const [showAddOptionForm, setShowAddOptionForm] = useState({});
   const [newOption, setNewOption] = useState({
@@ -271,7 +281,63 @@ const handleAcceptRefund = (refundId)=>{
   .then(res => res.json())
   .then(data => console.log(data.message))
   .catch(err => console.error(err));
-}
+} 
+  // view profile functions 
+  const handleViewProfile = (user) => {
+    setSelectedUser(user);
+    setEditUserData({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      isAdmin: user.isAdmin
+    });
+    setShowProfileModal(true);
+  }; 
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditUserData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  // Function to save user changes
+  const handleSaveUser = async () => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/api/users/${selectedUser.id}`,
+        editUserData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      // Update the users list
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === selectedUser.id ? { ...user, ...editUserData } : user
+        )
+      );
+
+      setShowProfileModal(false);
+      alert('User updated successfully!');
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      alert('Failed to update user. Please try again.');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowProfileModal(false);
+    setSelectedUser(null);
+  };
+
+
+
 
 
 
@@ -339,16 +405,7 @@ const handleAcceptRefund = (refundId)=>{
             Refunds Demands
           </button>
 
-          <button
-            onClick={() => setSection('import_villes')}
-            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-              section === 'import_villes'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            Import Villes
-          </button>
+
         </nav>
       </aside>
 
@@ -693,88 +750,253 @@ const handleAcceptRefund = (refundId)=>{
                 </p>
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {users.map((user, index) => (
-                  <div
-                    key={user.id}
-                    className="group relative bg-white rounded-3xl border border-blue-100 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 overflow-hidden"
-                    style={{
-                      animation: `cardSlideIn 0.6s ease-out ${index * 0.1}s both`
-                    }}
-                  >
-                    {/* Background Gradient Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    <div className="relative p-6">
-                      {/* User Avatar & Status */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="relative">
-                          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <span className="text-2xl font-bold text-white">
-                              {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                            </span>
-                          </div>
-                          <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
-                            user.isActive ? 'bg-green-500' : 'bg-gray-400'
-                          }`} />
-                        </div>
-                        
-                        {/* Admin Badge */}
-                        {user.isAdmin && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold uppercase tracking-wide">
-                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                            </svg>
-                            Admin
-                          </span>
-                        )}
-                      </div>
+<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+  {users.map((user, index) => {
+    const roleColors = {
+      admin: {
+        card: 'from-red-50 to-white border-red-100',
+        badge: 'bg-red-500 text-white',
+        accent: 'bg-red-500',
+        text: 'text-red-600',
+        icon: 'text-red-500',
+        gradient: 'from-red-500 to-red-600',
+        hover: 'hover:shadow-red-200'
+      },
+      owner: {
+        card: 'from-green-50 to-white border-green-100',
+        badge: 'bg-green-500 text-white',
+        accent: 'bg-green-500',
+        text: 'text-green-600',
+        icon: 'text-green-500',
+        gradient: 'from-green-500 to-green-600',
+        hover: 'hover:shadow-green-200'
+      },
+      user: {
+        card: 'from-blue-50 to-white border-blue-100',
+        badge: 'bg-blue-500 text-white',
+        accent: 'bg-blue-500',
+        text: 'text-blue-600',
+        icon: 'text-blue-500',
+        gradient: 'from-blue-500 to-blue-600',
+        hover: 'hover:shadow-blue-200'
+      }
+    };
 
-                      {/* User Info */}
-                      <div className="mb-4">
-                        <h2 className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors duration-300 mb-2">
-                          {user.name}
-                        </h2>
-                        <p className="text-gray-600 text-sm flex items-center">
-                          <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                          {user.email}
-                        </p>
-                        
-                        {/* Additional User Info */}
-                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                          <span className="flex items-center">
-                            <svg className="w-3 h-3 mr-1 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            </svg>
-                            Joined {new Date(user.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
+    const colors = roleColors[user.role] || roleColors.user;
 
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-4 border-t border-blue-100">
-                        <button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
-                          View Profile
-                        </button>
-                        <button className="p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-all duration-300 transform hover:scale-105 border border-blue-100">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Hover Effect Border */}
-                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-200 rounded-3xl transition-all duration-500 pointer-events-none" />
-                    
-                    {/* Green Accent Bar */}
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-                ))}
+    return (
+      <div
+        key={user.id}
+        className={`group relative bg-gradient-to-br ${colors.card} rounded-3xl border shadow-lg ${colors.hover} hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 overflow-hidden`}
+        style={{
+          animation: `cardSlideIn 0.6s ease-out ${index * 0.1}s both`
+        }}
+      >
+        {/* Background Gradient Effect */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${colors.card.replace('50', '100').replace('to-white', 'to-white/80')} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+        
+        <div className="relative p-6">
+          {/* User Avatar & Status */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="relative">
+              <div className={`w-16 h-16 bg-gradient-to-br ${colors.gradient} rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <span className="text-2xl font-bold text-white">
+                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase()} 
+                </span>
               </div>
+              <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
+                user.isActive ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+            </div>
+            
+            {/* Role Badge - Integrated with existing design */}
+            {user.role && (
+              <span className={`inline-flex items-center px-3 py-1 rounded-full ${colors.badge} text-xs font-bold uppercase tracking-wide shadow-sm`}>
+                {user.role}
+              </span>
             )}
+          </div>
+
+          {/* User Info - Cleaner integration */}
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-gray-900 group-hover:text-gray-800 transition-colors duration-300 mb-2">
+              {user.name}
+            </h2>
+            
+            <p className="text-gray-600 text-sm flex items-center mb-3">
+              <svg className={`w-4 h-4 mr-2 ${colors.icon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+              {user.email}
+            </p>
+
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center">
+                <svg className={`w-3 h-3 mr-1 ${colors.icon}`} fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Joined {new Date(user.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+
+          {/* Stats Row */}
+          <div className="flex items-center justify-between py-3 px-4 bg-white/50 rounded-xl border border-white mb-4">
+            <div className="text-center">
+              <div className="font-bold text-gray-900">12</div>
+              <div className="text-xs text-gray-500">Projects</div>
+            </div>
+            <div className="w-px h-6 bg-gray-200" />
+            <div className="text-center">
+              <div className="font-bold text-gray-900">47</div>
+              <div className="text-xs text-gray-500">Tasks</div>
+            </div>
+            <div className="w-px h-6 bg-gray-200" />
+            <div className="text-center">
+              <div className="font-bold text-gray-900">89%</div>
+              <div className="text-xs text-gray-500">Done</div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-4 border-t border-gray-100">
+            <button onClick={() => handleViewProfile(user)} className={`flex-1 bg-gradient-to-r ${colors.gradient} hover:shadow-lg text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-md`}>
+              View Profile
+            </button>
+            <button className={`p-2.5 ${colors.text}/10 hover:${colors.text}/20 ${colors.text} rounded-xl transition-all duration-300 transform hover:scale-105 border border-current/20`}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Hover Effect Border */}
+        <div className={`absolute inset-0 border-2 border-transparent group-hover:border-${colors.accent.split('-')[1]}-200 rounded-3xl transition-all duration-500 pointer-events-none`} />
+        
+        {/* Role-colored Accent Bar */}
+        <div className={`absolute top-0 left-0 w-full h-1 ${colors.accent} opacity-80 group-hover:opacity-100 transition-opacity duration-500`} />
+      </div>
+    );
+  })}
+</div>
+            )}
+
+            {/* VIEW PROFILE MODAL */} 
+             {showProfileModal && selectedUser && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-800">Edit User Profile</h3>
+          <button
+            onClick={handleCloseModal}
+            className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={editUserData.name}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              placeholder="Enter full name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={editUserData.email}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+              placeholder="Enter email address"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Role
+            </label>
+            <select
+              name="role"
+              value={editUserData.role}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            >
+              <option value="user">User</option>
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                name="isActive"
+                checked={editUserData.isActive}
+                onChange={handleInputChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label className="ml-2 text-sm text-gray-700">Active User</label>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                name="isAdmin"
+                checked={editUserData.isAdmin}
+                onChange={handleInputChange}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label className="ml-2 text-sm text-gray-700">Administrator</label>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+          <button
+            onClick={handleCloseModal}
+            className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSaveUser}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
           </div>
         )} 
 
@@ -1206,16 +1428,7 @@ const handleAcceptRefund = (refundId)=>{
             </div>
           )}
 
-          {
-            section === "import_villes" && (
-              <div>
-                <form action="https://n8n.manypilots.com/webhook/research-finetuning" method="POST"> 
-                  <input type="file" /> 
-                  <input type="submit" value="Import" />
-                </form>
-              </div>
-            )
-          }
+
 
 
 
