@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
 export default function SignupOwner() {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "" , password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -130,6 +130,29 @@ export default function SignupOwner() {
                   <i className="fa-solid fa-envelope"></i>
                 </div>
               </div>
+            </div>
+
+            {/* Phone Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700">Phone</label>
+              <div className="relative">
+                <input
+                  type="phone"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  required
+                  minLength="6"
+                  className="w-full px-4 py-4 bg-white border border-slate-200 rounded-xl 
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                           placeholder-slate-400 text-slate-700 shadow-sm transition-all"
+                  placeholder="0612345678"
+                />
+                <div className="absolute right-4 top-4 text-slate-400">
+                  <i className="fa-solid fa-lock"></i>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">Minimum 10 characters</p>
             </div>
 
             {/* Password Field */}

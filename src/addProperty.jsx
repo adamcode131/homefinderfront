@@ -28,11 +28,9 @@ export default function AddProperty() {
       },
     })
       .then(res => {
-        console.log('Response status:', res.status);
         return res.text(); // Get raw text first
       })
       .then(text => {
-        console.log('Response body:', text);
         const data = JSON.parse(text);
         setCategories(data.categories);
       })

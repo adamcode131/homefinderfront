@@ -66,7 +66,7 @@ function Boutique() {
   const handleDelete = (propertyId) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette propriété ?")) {
       axios.delete(`http://localhost:8000/api/deleteproperty/${propertyId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('ownerToken')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
       .then(() => window.location.reload())
       .catch(error => console.error("Error deleting property:", error.response?.data || error));

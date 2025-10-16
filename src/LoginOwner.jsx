@@ -35,7 +35,7 @@ export default function LoginOwner() {
         localStorage.setItem("token", data.token);
 
         // Store owner ID in localStorage
-        localStorage.setItem("owner_id", data.user.id);
+        // localStorage.setItem("owner_id", data.user.id);
 
         // Update context (if needed)
         login(data.token, data.user);

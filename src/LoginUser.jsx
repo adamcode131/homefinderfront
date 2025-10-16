@@ -35,7 +35,7 @@ export default function LoginUser() {
         localStorage.setItem("token", data.token);
 
         // Store user ID in localStorage
-        localStorage.setItem("user_id", data.user.id);
+        // localStorage.setItem("user_id", data.user.id);
 
         // Update context (if needed)
         login(data.token, data.user);
