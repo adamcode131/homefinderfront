@@ -15,9 +15,9 @@ export default function AdminPanel() {
   const [editUserData, setEditUserData] = useState({
     name: '',
     email: '',
-    role: '',
-    isActive: false,
-    isAdmin: false
+    phone : '', 
+    role: '' , 
+    balance  : 0
   });
   // State for adding options to categories
   const [showAddOptionForm, setShowAddOptionForm] = useState({});
@@ -288,9 +288,9 @@ const handleAcceptRefund = (refundId)=>{
     setEditUserData({
       name: user.name,
       email: user.email,
+      phone : user.phone,
       role: user.role,
-      isActive: user.isActive,
-      isAdmin: user.isAdmin
+      balance : user.balance 
     });
     setShowProfileModal(true);
   }; 
@@ -307,7 +307,7 @@ const handleAcceptRefund = (refundId)=>{
   const handleSaveUser = async () => {
     try {
       const response = await axios.put(
-        `http://localhost:8000/api/users/${selectedUser.id}`,
+        `http://localhost:8000/api/user/${selectedUser.id}`,
         editUserData,
         {
           headers: {
@@ -337,6 +337,22 @@ const handleAcceptRefund = (refundId)=>{
   };
 
 
+const handleBalanceChange = (amount) => {
+  // Ensure we're working with numbers
+  const currentBalance = Number(editUserData.balance) || 0;
+  const newBalance = Math.max(0, Math.round(currentBalance + amount)); // Prevent negative balance
+  
+  // Update both states to keep them in sync
+  setSelectedUser(prev => ({
+    ...prev,
+    balance: newBalance
+  }));
+  
+  setEditUserData(prev => ({
+    ...prev,
+    balance: newBalance
+  }));
+};
 
 
 
@@ -891,112 +907,128 @@ const handleAcceptRefund = (refundId)=>{
 </div>
             )}
 
-            {/* VIEW PROFILE MODAL */} 
-             {showProfileModal && selectedUser && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
-        {/* Modal Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-800">Edit User Profile</h3>
-          <button
-            onClick={handleCloseModal}
-            className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+{/* VIEW PROFILE MODAL */} 
+{showProfileModal && selectedUser && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
+      {/* Modal Header */}
+      <div className="flex justify-between items-center p-6 border-b border-gray-200">
+        <h3 className="text-xl font-bold text-gray-800">Edit User Profile</h3>
+        <button
+          onClick={handleCloseModal}
+          className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Modal Body */}
+      <div className="p-6 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Full Name
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={editUserData.name ?? ""}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            placeholder="Enter full name"
+          />
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={editUserData.name}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              placeholder="Enter full name"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={editUserData.email}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              placeholder="Enter email address"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Role
-            </label>
-            <select
-              name="role"
-              value={editUserData.role}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-            >
-              <option value="user">User</option>
-              <option value="owner">Owner</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="isActive"
-                checked={editUserData.isActive}
-                onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label className="ml-2 text-sm text-gray-700">Active User</label>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="isAdmin"
-                checked={editUserData.isAdmin}
-                onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label className="ml-2 text-sm text-gray-700">Administrator</label>
-            </div>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Email Address
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={editUserData.email ?? ""}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            placeholder="Enter email address"
+          />
         </div>
 
-        {/* Modal Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
-          <button
-            onClick={handleCloseModal}
-            className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200"
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            value={editUserData.phone ?? ""}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            placeholder="Enter phone number"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Role
+          </label>
+          <select
+            name="role"
+            value={editUserData.role ?? ""}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
           >
-            Cancel
-          </button>
-          <button
-            onClick={handleSaveUser}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
-          >
-            Save Changes
-          </button>
+            <option value="user">User</option>
+            <option value="owner">Owner</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        {/* Balance Section */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Balance
+          </label>
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-semibold text-gray-900">
+                {Number(editUserData.balance || 0).toFixed(2)} points
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleBalanceChange(-1)}
+                className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded flex items-center justify-center transition-colors duration-200 font-bold"
+              >
+                -
+              </button>
+              <button
+                onClick={() => handleBalanceChange(1)}
+                className="w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded flex items-center justify-center transition-colors duration-200 font-bold"
+              >
+                +
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Modal Footer */}
+      <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+        <button
+          onClick={handleCloseModal}
+          className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSaveUser}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
+        >
+          Save Changes
+        </button>
+      </div>
     </div>
-  )}
+  </div>
+)}
           </div>
         )} 
 
