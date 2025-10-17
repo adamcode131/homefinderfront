@@ -8,6 +8,9 @@ export default function AdminPanel() {
   const [filter,setFilter] = useState('') ; 
   const [filteredProperties, setFilteredProperties] = useState([]) ;  
   const [users,setUsers] = useState([]) ; 
+  const [added_points , setAddedPoints] = useState(0);
+  const [deducted_points , setDeductedPoints] = useState(0);
+  
   const [refunds,setRefunds] = useState([]); 
   // VIEW PROFILE
   const [selectedUser, setSelectedUser] = useState(null);
@@ -324,11 +327,21 @@ const handleAcceptRefund = (refundId)=>{
       );
 
       setShowProfileModal(false);
+
       alert('User updated successfully!');
     } catch (error) {
       console.error('Failed to update user:', error);
       alert('Failed to update user. Please try again.');
+    } 
+
+
+    // update notifications table 
+    // axios.put(url,{data},{config})
+    try{
+    const resp = await axios.post(`http://localhost:8000/api/addNotification/${selectedUser.id}`,{added_points,deducted_points} , {headers : {Authorization : `Bearer ${localStorage.getItem('token')}`} })
     }
+    catch(error){console.log(error)} 
+    
   };
 
   const handleCloseModal = () => {
@@ -338,9 +351,8 @@ const handleAcceptRefund = (refundId)=>{
 
 
 const handleBalanceChange = (amount) => {
-  // Ensure we're working with numbers
   const currentBalance = Number(editUserData.balance) || 0;
-  const newBalance = Math.max(0, Math.round(currentBalance + amount)); // Prevent negative balance
+  const newBalance = Math.max(0, Math.round(currentBalance + amount));
   
   // Update both states to keep them in sync
   setSelectedUser(prev => ({
@@ -351,7 +363,19 @@ const handleBalanceChange = (amount) => {
   setEditUserData(prev => ({
     ...prev,
     balance: newBalance
-  }));
+  })); 
+
+  const diff = newBalance - currentBalance;
+  
+  //ACCUMULATE the points instead of replacing them
+  if (diff > 0) { 
+    setAddedPoints(prev => prev + diff); // Add to existing value
+    setDeductedPoints(0); // Reset deducted points when adding
+  } 
+  if (diff < 0) { 
+    setDeductedPoints(prev => prev + Math.abs(diff)); // Add to existing value
+    setAddedPoints(0); // Reset added points when deducting
+  }
 };
 
 
