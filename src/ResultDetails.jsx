@@ -37,7 +37,6 @@ export default function ResultDetails() {
           `http://localhost:8000/api/details/${slug}`
         );
         setProperty(response.data.property);
-        console.log(response.data.property);
       } catch (error) {
         console.error("Failed to fetch property details:", error);
       } finally {
@@ -291,7 +290,6 @@ export default function ResultDetails() {
         email: formData.email,
         phone: formData.phone,
         date_reservation: formData.date_reservation,
-        message: formData.message,
         properties: [slug]
       })
     })

@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 import axios from 'axios'; 
 import {motion, AnimatePresence } from "framer-motion";
 import ContactOwner from './ContactOwner.jsx';
+import NotificationsPanel from './NotificationsPanel.jsx';
 
 
 
@@ -227,6 +228,9 @@ function Balance() {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  // ✅ userId state removed - no longer needed
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -245,6 +249,7 @@ function Balance() {
       })
       .then((data) => {
         setBalance(data.user.balance);
+        // ✅ Removed: setUserId(data.user.id);
         setLoading(false);
       })
       .catch((err) => {
@@ -284,6 +289,17 @@ function Balance() {
           ) : (
             <>
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full"></div>
+              
+              {/* Notification Bell Icon */}
+              <button
+                onClick={() => setShowNotifications(true)}
+                className="absolute top-6 right-6 z-20 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:shadow-lg transition-all duration-200 hover:scale-105"
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </button>
+
               <h2 className="text-xl font-semibold text-slate-700 mb-4 relative z-10">Current Balance</h2>
               <div className="flex items-end mb-2 relative z-10">
                 <span className="text-5xl md:text-6xl font-bold text-blue-600 mr-3">{balance}</span>
@@ -332,6 +348,12 @@ function Balance() {
           </p>
         </div>
       </div>
+
+      {/* ✅ UPDATED: NotificationsPanel without userId prop */}
+      <NotificationsPanel 
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </div>
   );
 }
