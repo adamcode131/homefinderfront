@@ -4,6 +4,7 @@ export default function NotificationsPanel({ isOpen, onClose }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -29,13 +30,47 @@ export default function NotificationsPanel({ isOpen, onClose }) {
       }
 
       const data = await response.json();
-      // Since your API returns the notifications directly (not nested in a notifications key)
-        setNotifications(data ? data.reverse() : []);
+      // Filter out notifications where both added_points and deducted_points are 0 or null AND no lead_id
+      const filtered = (data || []).filter(
+        (n) =>
+          (n.added_points && n.added_points !== 0) ||
+          (n.deducted_points && n.deducted_points !== 0) ||
+          n.lead_id // Include notifications with lead_id (new leads)
+      );
+
+      setNotifications(filtered.reverse());
     } catch (err) {
       console.error("Error fetching notifications:", err);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteNotification = async (notificationId) => {
+    setDeletingId(notificationId);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:8000/api/notifications/${notificationId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete notification");
+      }
+
+      // Remove the notification from the local state
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      
+    } catch (err) {
+      console.error("Error deleting notification:", err);
+      alert("Failed to delete notification. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -47,6 +82,54 @@ export default function NotificationsPanel({ isOpen, onClose }) {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getNotificationMessage = (notification) => {
+    // Check if it's a new lead notification
+    if (notification.lead_id && notification.lead && notification.lead.property) {
+      return `New lead at ${notification.lead.property.title}`;
+    }
+    
+    // Points notification
+    if (notification.added_points > 0) {
+      return `+${notification.added_points} points added`;
+    } else if (notification.deducted_points > 0) {
+      return `${notification.deducted_points} points deducted`;
+    }
+    
+    return "Notification";
+  };
+
+  const getNotificationIcon = (notification) => {
+    // New lead icon
+    if (notification.lead_id) {
+      return (
+        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+      );
+    }
+    
+    // Points icons
+    if (notification.added_points > 0) {
+      return (
+        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-red-100 text-red-600">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+          </svg>
+        </div>
+      );
+    }
   };
 
   if (!isOpen) return null;
@@ -97,38 +180,37 @@ export default function NotificationsPanel({ isOpen, onClose }) {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className="p-4 hover:bg-gray-50 transition-colors duration-200"
+                  className="p-4 hover:bg-gray-50 transition-colors duration-200 group relative"
                 >
                   <div className="flex items-start gap-3">
                     {/* Notification Icon */}
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                      notification.added_points > 0 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-red-100 text-red-600'
-                    }`}>
-                      {notification.added_points > 0 ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                        </svg>
-                      )}
-                    </div>
+                    {getNotificationIcon(notification)}
 
                     {/* Notification Content */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
-                        {notification.added_points > 0 
-                          ? `+${notification.added_points} points added`
-                          : `${notification.deducted_points} points deducted`
-                        }
+                        {getNotificationMessage(notification)}
                       </p>
                       <p className="text-xs text-gray-500">
                         {formatDate(notification.created_at)}
                       </p>
                     </div>
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => deleteNotification(notification.id)}
+                      disabled={deletingId === notification.id}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-red-500 disabled:opacity-50"
+                      title="Delete notification"
+                    >
+                      {deletingId === notification.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
               ))}

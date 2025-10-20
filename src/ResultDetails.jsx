@@ -11,6 +11,7 @@ export default function ResultDetails() {
   const[categories,setCategories] = useState([]);
   const [isSearching,setIsSearching] = useState(false);
   const[query,setQuery] = useState();
+  const [leadId,setLeadId] = useState() ; 
 
   const navigate = useNavigate();
 
@@ -249,7 +250,7 @@ export default function ResultDetails() {
     setErrorMsg("");
 
     try {
-      await axios.post(
+      const response = await axios.post(
         "http://localhost:8000/api/leads",
         {
           ...formData,
@@ -268,6 +269,8 @@ export default function ResultDetails() {
         date_reservation: "",
         message: "",
       });
+      addToNotif(response.data.lead_id)
+      
     } catch (error) {
       console.error(error);
       setErrorMsg(
@@ -293,6 +296,36 @@ export default function ResultDetails() {
         properties: [slug]
       })
     })
+    .then(res => res.json())
+    .then(data => {addToNotif(data.lead_id)})
+
+    // add lead to notifications 
+
+
+
+
+
+
+
+  }
+
+
+  const addToNotif = (leadId)=>{
+      axios.post(
+      `http://localhost:8000/api/addLeadIdToNotification/${leadId}`,
+      {}, 
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+    .then(res => {
+      console.log(res.data.message);
+    })
+    .catch(err => {
+      console.error('Error adding lead ID to notification:', err);
+    });
   }
 
 
