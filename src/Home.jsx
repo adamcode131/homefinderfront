@@ -3,14 +3,36 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function Home() {
 
-  const [query,setQuery] = useState('');  
+  const [query,setQuery] = useState('');   
   const [propertyIds, setPropertyIds] = useState([]); 
   const [isSearching, setIsSearching] = useState(false);
   const [filter,setFilter] = useState('');
   const [suggestions,setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
+  const [location,setLocation] = useState({latitude : null , longitude : null})
+  const [autourDeMoi, setAutourDeMoi] = useState(false); // New state for toggle
   const navigate = useNavigate();
+
+  // geoLocation added
+
+    useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          console.log(location.longitude)
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+        }
+      );
+    } else {
+      console.warn("Geolocation not supported by this browser.");
+    }
+  }, []);
 
   
   const handleSearch = (param) => {
@@ -29,6 +51,19 @@ export default function Home() {
       } 
     });
 
+    // Prepare request body
+    const requestBody = {
+      chatInput: search,
+      token: localStorage.getItem('token'),
+      latitude: location.latitude, 
+      longitude: location.longitude
+    };
+
+    // Add radius if "autour de moi" is enabled
+    if (autourDeMoi) {
+      requestBody.radius = 50;
+    }
+
     // Then make the API call
     fetch('https://n8n.manypilots.com/webhook/search', {
       headers: {
@@ -36,10 +71,7 @@ export default function Home() {
         'Content-Type': 'application/json'
       },
       method: 'POST',
-      body: JSON.stringify({
-        chatInput: search,
-        token: localStorage.getItem('token')
-      })
+      body: JSON.stringify(requestBody)
     })
       .then(res => res.json())
       .then(data => {
@@ -49,8 +81,8 @@ export default function Home() {
         navigate('/result', { 
           state: { 
             propertyIds: ids,
-            searchQuery: search ,
-            
+            searchQuery: search,
+            autourDeMoi: autourDeMoi // Pass the toggle state to results
           } 
         });
       })
@@ -98,6 +130,10 @@ export default function Home() {
     setTimeout(() => setShowSuggestions(false), 200);
   };
 
+  const toggleAutourDeMoi = () => {
+    setAutourDeMoi(!autourDeMoi);
+  };
+
 
   return (
     <div id="main-container" className="min-h-[900px] bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -112,7 +148,7 @@ export default function Home() {
             <i className="fa-solid fa-home text-white text-lg"></i>
           </div>
           <span className="ml-3 text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-            NestYours
+            Daryol
           </span>
         </div>
 
@@ -166,14 +202,14 @@ export default function Home() {
               <i className="fa-solid fa-home text-white text-3xl"></i>
             </div>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">NestYours</h1>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">Daryol</h1>
           <p className="text-slate-500 text-lg font-light">Powered by Artificial Intelligence</p>
         </div>
 
         {/* Search Section */}
         <div id="search-section" className="w-full max-w-3xl">
           {/* Search Bar */}
-          <div className="relative mb-8">
+          <div className="relative mb-4">
             <div className="flex items-center bg-white border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 focus-within:border-blue-500 focus-within:search-glow group">
               <div className="pl-8 pr-4">
                 <i className="fa-solid fa-search text-slate-400 text-xl group-focus-within:text-blue-500 transition-colors duration-200"></i>
@@ -225,10 +261,35 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Autour de Moi Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200">
+              <span className="text-slate-700 font-medium text-sm">Autour de moi</span>
+              <button 
+                onClick={toggleAutourDeMoi}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                  autourDeMoi ? 'bg-blue-500' : 'bg-slate-300'
+                }`}
+              >
+                <span 
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                    autourDeMoi ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <div className="flex items-center text-slate-500 text-sm">
+                <i className="fa-solid fa-location-crosshairs mr-2 text-blue-500"></i>
+                {autourDeMoi ? 'Activé (50km)' : 'Désactivé'}
+              </div>
+            </div>
+          </div>
+
           {/* Tagline */}
           <p className="text-center text-slate-600 text-xl mb-12 font-light">
             Find your home with <span className="font-medium text-blue-600">AI-powered search</span>
           </p>
+          
           {/* Quick Suggestions */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
             <button onClick={()=>{handleSearch("1 Chambre") }} className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
@@ -285,7 +346,7 @@ export default function Home() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
                 <i className="fa-solid fa-home text-white text-sm"></i>
               </div>
-              <span className="text-xl font-semibold text-slate-800">NestYours</span>
+              <span className="text-xl font-semibold text-slate-800">Daryol</span>
             </div>
             <div className="flex items-center space-x-8 text-sm text-slate-600 mb-6 md:mb-0">
               <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">About</span>
@@ -294,7 +355,7 @@ export default function Home() {
               <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">Contact</span>
             </div>
             <div className="text-sm text-slate-500 font-light">
-              © 2025 NestYours. All rights reserved.
+              © 2025 Daryol. All rights reserved.
             </div>
           </div>
         </div>

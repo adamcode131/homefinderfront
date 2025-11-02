@@ -688,7 +688,7 @@ const handleBalanceChange = (amount) => {
                   </span>
                   <span className="flex items-center gap-1">
                     <i className="fa-solid fa-location-dot text-green-400"></i>
-                    {property.ville_id}
+                    {property.ville.name}
                   </span>
                 </div>
               </div>
