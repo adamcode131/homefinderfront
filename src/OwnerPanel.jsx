@@ -14,9 +14,14 @@ import NotificationsPanel from './NotificationsPanel.jsx';
 function Boutique() {
   const [properties, setProperties] = useState([]);
   const [filter, setFilter] = useState('');
+  const [selectedIntention, setSelectedIntention] = useState('');
+  const [selectedVille, setSelectedVille] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+
+  const propertiesPerPage = 10;
 
   useEffect(() => {
     if (!currentUser) return;
@@ -46,19 +51,42 @@ function Boutique() {
     fetchProperties();
   }, [currentUser]);
 
-  // Filter properties by type or title
-  const filteredProperties = properties.filter(
-    (p) =>
-      p.title.toLowerCase().includes(filter.toLowerCase()) ||
-      p.type.toLowerCase().includes(filter.toLowerCase())
-  );
+  // Get unique villes and intentions for filter dropdowns
+  const uniqueVilles = [...new Set(properties.map(p => p.ville?.name).filter(Boolean))].sort();
+  const uniqueIntentions = [...new Set(properties.map(p => p.intention))].sort();
 
-  // Group by type
-  const grouped = filteredProperties.reduce((acc, p) => {
-    if (!acc[p.type]) acc[p.type] = [];
-    acc[p.type].push(p);
-    return acc;
-  }, {});
+  // Filter properties by title, ville, quartier, and selected filters
+  const filteredProperties = properties.filter((property) => {
+    const matchesSearch = 
+      property.title.toLowerCase().includes(filter.toLowerCase()) ||
+      (property.ville?.name && property.ville.name.toLowerCase().includes(filter.toLowerCase())) ||
+      (property.quartier?.name && property.quartier.name.toLowerCase().includes(filter.toLowerCase()));
+    
+    const matchesIntention = !selectedIntention || property.intention === selectedIntention;
+    const matchesVille = !selectedVille || property.ville?.name === selectedVille;
+
+    return matchesSearch && matchesIntention && matchesVille;
+  });
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, selectedIntention, selectedVille]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProperties.length / propertiesPerPage);
+  const indexOfLastProperty = currentPage * propertiesPerPage;
+  const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
+  const currentProperties = filteredProperties.slice(indexOfFirstProperty, indexOfLastProperty);
+
+  // Calculate stats from real data
+  const stats = {
+    total: properties.length,
+    forRent: properties.filter(p => p.intention === 'loyer').length,
+    forSale: properties.filter(p => p.intention === 'vente').length,
+    // This would need to come from your database - using placeholder for now
+    monthlyVisits: 24
+  };
 
   const handleEdit = (propertyId) => {
     navigate(`/updateproperty/${propertyId}`);
@@ -74,147 +102,384 @@ function Boutique() {
     }
   };
 
+  const handleAddProperty = () => {
+    navigate('/addproperty');
+  };
+
+  const getIntentionColor = (intention) => {
+    return intention === 'loyer' ? 'bg-accent' : 'bg-purple';
+  };
+
+  const getIntentionText = (intention) => {
+    return intention === 'loyer' ? 'Location' : 'Vente';
+  };
+
+  const getIntentionDisplayText = (intention) => {
+    return intention === 'loyer' ? 'Location' : 'Vente';
+  };
+
+  const getPriceDisplay = (property) => {
+    if (property.intention === 'loyer') {
+      return (
+        <>
+          {property.rent_price} DH<span className="text-sm font-normal text-gray-500">/mois</span>
+        </>
+      );
+    }
+    return `${property.sale_price} DH`;
+  };
+
+  // Pagination controls
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    
+    // Previous button
+    buttons.push(
+      <button
+        key="prev"
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 border border-gray-300 rounded-lg transition-colors ${
+          currentPage === 1 
+            ? 'text-gray-400 cursor-not-allowed' 
+            : 'text-gray-500 hover:bg-gray-50'
+        }`}
+      >
+        <i className="fa-solid fa-chevron-left"></i>
+      </button>
+    );
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 || 
+        i === totalPages || 
+        (i >= currentPage - 1 && i <= currentPage + 1)
+      ) {
+        buttons.push(
+          <button
+            key={i}
+            onClick={() => handlePageChange(i)}
+            className={`px-4 py-2 border rounded-lg transition-colors ${
+              currentPage === i
+                ? 'bg-primary text-white border-primary'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {i}
+          </button>
+        );
+      } else if (i === currentPage - 2 || i === currentPage + 2) {
+        buttons.push(
+          <span key={i} className="px-2 text-gray-500">
+            ...
+          </span>
+        );
+      }
+    }
+
+    // Next button
+    buttons.push(
+      <button
+        key="next"
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 border border-gray-300 rounded-lg transition-colors ${
+          currentPage === totalPages 
+            ? 'text-gray-400 cursor-not-allowed' 
+            : 'text-gray-500 hover:bg-gray-50'
+        }`}
+      >
+        <i className="fa-solid fa-chevron-right"></i>
+      </button>
+    );
+
+    return buttons;
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilter('');
+    setSelectedIntention('');
+    setSelectedVille('');
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Ma Boutique</h1>
-          <p className="text-slate-600">Gérez vos propriétés et consultez leurs détails</p>
-        </div>
+        <header className="bg-white border-b border-gray-200 px-8 py-6 mb-8 rounded-3xl shadow-soft">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Ma Boutique</h1>
+              <p className="text-gray-600 mt-1">Gérez vos propriétés et suivez vos performances</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={handleAddProperty}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+              >
+                <i className="fa-solid fa-plus mr-2"></i>
+                Ajouter une propriété
+              </button>
+            </div>
+          </div>
+        </header>
 
-        {/* Filter Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-slate-200">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex-1">
-              <label htmlFor="search" className="block text-sm font-medium text-slate-700 mb-1">
-                Rechercher une propriété
-              </label>
-              <div className="relative">
-                <input
-                  id="search"
-                  type="text"
-                  placeholder="Rechercher par titre ou type..."
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 shadow-sm 
-                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                            placeholder-slate-400 bg-white transition-all duration-200
-                            hover:border-slate-300"
-                />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </span>
+        {/* Search and Filter Section */}
+        <div id="search-filter-section" className="mb-8">
+          <div className="bg-white rounded-xl shadow-card p-6 border border-gray-100">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Rechercher par titre, ville ou quartier..." 
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="w-full px-4 py-3 pl-12 pr-4 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                  />
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                    <i className="fa-solid fa-search text-gray-400"></i>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <select 
+                  value={selectedIntention}
+                  onChange={(e) => setSelectedIntention(e.target.value)}
+                  className="px-4 py-3 border border-gray-200 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                >
+                  <option value="">Toutes les intentions</option>
+                  {uniqueIntentions.map(intention => (
+                    <option key={intention} value={intention}>
+                      {getIntentionDisplayText(intention)}
+                    </option>
+                  ))}
+                </select>
+                
+                <select 
+                  value={selectedVille}
+                  onChange={(e) => setSelectedVille(e.target.value)}
+                  className="px-4 py-3 border border-gray-200 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                >
+                  <option value="">Toutes les villes</option>
+                  {uniqueVilles.map(ville => (
+                    <option key={ville} value={ville}>
+                      {ville}
+                    </option>
+                  ))}
+                </select>
+
+                {(filter || selectedIntention || selectedVille) && (
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-3 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+                  >
+                    <i className="fa-solid fa-times mr-2"></i>
+                    Effacer
+                  </button>
+                )}
               </div>
             </div>
             
-            <div className="flex items-end">
-              <span className="text-slate-600 text-sm bg-slate-100 rounded-lg px-3 py-2">
-                {filteredProperties.length} propriété{filteredProperties.length !== 1 ? 's' : ''} trouvée{filteredProperties.length !== 1 ? 's' : ''}
-              </span>
+            {/* Active filters display */}
+            {(filter || selectedIntention || selectedVille) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {filter && (
+                  <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                    Recherche: "{filter}"
+                    <button 
+                      onClick={() => setFilter('')}
+                      className="ml-2 text-blue-600 hover:text-blue-800"
+                    >
+                      <i className="fa-solid fa-times text-xs"></i>
+                    </button>
+                  </span>
+                )}
+                {selectedIntention && (
+                  <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                    Intention: {getIntentionDisplayText(selectedIntention)}
+                    <button 
+                      onClick={() => setSelectedIntention('')}
+                      className="ml-2 text-green-600 hover:text-green-800"
+                    >
+                      <i className="fa-solid fa-times text-xs"></i>
+                    </button>
+                  </span>
+                )}
+                {selectedVille && (
+                  <span className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
+                    Ville: {selectedVille}
+                    <button 
+                      onClick={() => setSelectedVille('')}
+                      className="ml-2 text-purple-600 hover:text-purple-800"
+                    >
+                      <i className="fa-solid fa-times text-xs"></i>
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div id="stats-overview" className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-card p-6 border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">Total Propriétés</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-building text-primary text-xl"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-card p-6 border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">En Location</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.forRent}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-key text-accent text-xl"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-card p-6 border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">En Vente</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.forSale}</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-home text-purple text-xl"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-card p-6 border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">Visites ce mois</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.monthlyVisits}</p>
+              </div>
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <i className="fa-solid fa-calendar-check text-yellow-600 text-xl"></i>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Properties Section */}
+        {/* Properties Grid */}
         {loading ? (
           <div className="flex justify-center items-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : Object.keys(grouped).length > 0 ? (
-          Object.keys(grouped).map((type) => (
-            <div key={type} className="mb-10">
-              <div className="flex items-center mb-4">
-                <h3 className="text-xl font-semibold text-slate-800">{type}</h3>
-                <span className="ml-3 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                  {grouped[type].length} propriété{grouped[type].length !== 1 ? 's' : ''}
-                </span>
-              </div>
-              
-              <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left text-slate-600">
-                    <thead className="text-xs text-slate-700 uppercase bg-slate-100">
-                      <tr>
-                        <th className="px-6 py-4 font-medium">Titre</th>
-                        <th className="px-6 py-4 font-medium">Ville</th>
-                        <th className="px-6 py-4 font-medium">Quartier</th>
-                        <th className="px-6 py-4 font-medium">Intention</th>
-                        <th className="px-6 py-4 font-medium">Prix</th>
-                        <th className="px-6 py-4 font-medium">Créé le</th>
-                        <th className="px-6 py-4 font-medium text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {grouped[type].map((p) => (
-                        <tr key={p.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="font-medium text-slate-800">{p.title}</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-full">
-                              {p.ville?.name || "—"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">{p.quartier?.name || "—"}</td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${p.intention === "loyer" ? "bg-green-100 text-green-800" : "bg-purple-100 text-purple-800"}`}>
-                              {p.intention === "loyer" ? "Location" : "Vente"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="font-semibold text-blue-600">
-                              {p.intention === "loyer" ? `${p.rent_price} DH/mois` : `${p.sale_price} DH`}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="text-slate-500">
-                              {new Date(p.created_at).toLocaleDateString()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleEdit(p.id)}
-                                className="flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-                                title="Modifier"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                Modifier
-                              </button>
-                              <button
-                                onClick={() => handleDelete(p.id)}
-                                className="flex items-center px-3 py-2 text-sm font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
-                                title="Supprimer"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                Supprimer
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        ) : filteredProperties.length > 0 ? (
+          <>
+            <div id="properties-grid" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {currentProperties.map((property) => (
+                <div key={property.id} className="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-card-hover transition-all duration-300">
+                  <div className="h-48 relative overflow-hidden">
+                    {property.images && property.images.length > 0 ? (
+                      <img 
+                        className="w-full h-full object-cover" 
+                        src={`http://localhost:8000/storage/${property.images[0].url}`} 
+                        alt={property.title}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <i className="fa-solid fa-home text-gray-400 text-4xl"></i>
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span className={`px-3 py-1 ${getIntentionColor(property.intention)} text-white text-sm font-medium rounded-full`}>
+                        {getIntentionText(property.intention)}
+                      </span>
+                    </div>
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full">
+                      <i className="fa-solid fa-eye text-gray-600 text-sm"></i>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{property.title}</h3>
+                    <div className="flex items-center text-gray-600 text-sm mb-3">
+                      <i className="fa-solid fa-location-dot mr-2 text-primary"></i>
+                      <span>
+                        {property.ville?.name || "Ville inconnue"}
+                        {property.quartier?.name && ` • ${property.quartier.name}`}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-xl font-bold text-gray-900">
+                        {getPriceDisplay(property)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Créé le {new Date(property.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <button 
+                        onClick={() => handleEdit(property.id)}
+                        className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
+                      >
+                        <i className="fa-solid fa-edit mr-2"></i>
+                        Modifier
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(property.id)}
+                        className="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm"
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div id="pagination" className="flex items-center justify-center mt-12">
+                <div className="flex items-center space-x-2">
+                  {renderPaginationButtons()}
+                </div>
+                <div className="ml-4 text-sm text-gray-600">
+                  Page {currentPage} sur {totalPages} • 
+                  {filteredProperties.length} propriété{filteredProperties.length !== 1 ? 's' : ''} au total
                 </div>
               </div>
-            </div>
-          ))
+            )}
+          </>
         ) : (
-          <div className="bg-white rounded-2xl shadow-md p-8 text-center border border-slate-200">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            <h3 className="text-lg font-medium text-slate-700 mb-2">Aucune propriété trouvée</h3>
-            <p className="text-slate-500">
-              {filter ? "Aucune propriété ne correspond à votre recherche." : "Vous n'avez pas encore ajouté de propriétés."}
+          <div className="bg-white rounded-3xl p-12 text-center border border-gray-200">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="fa-solid fa-home text-gray-400 text-3xl"></i>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Aucune propriété trouvée</h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              {filter || selectedIntention || selectedVille
+                ? "Aucune propriété ne correspond à vos critères de recherche." 
+                : "Vous n'avez pas encore ajouté de propriétés à votre boutique."
+              }
             </p>
+            <button 
+              onClick={handleAddProperty}
+              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+            >
+              <i className="fa-solid fa-plus mr-2"></i>
+              Ajouter votre première propriété
+            </button>
           </div>
         )}
       </div>
@@ -259,25 +524,38 @@ function Balance() {
       });
   }, []);
 
-  const offers = [
-    { points: 100, price: "50 dh" },
-    { points: 200, price: "100 dh" },
-    { points: 300, price: "150 dh" },
-    { points: 400, price: "200 dh" },
-    { points: 500, price: "250 dh" },
-  ];
+
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Your Account</h1>
-          <p className="text-slate-600">Manage your points and purchase more</p>
-        </div>
+        <header className="bg-white border-b border-gray-200 px-8 py-6 mb-8 rounded-3xl shadow-soft">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Balance</h1>
+              <p className="text-gray-600 mt-1">Manage your points and purchase more</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-primary rounded-lg border border-blue-200">
+                <i className="fa-solid fa-coins"></i>
+                <span className="font-semibold">{balance} points</span>
+              </div>
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(true)}
+                  className="w-10 h-10 bg-white rounded-full shadow-soft border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:shadow-card-hover transition-all duration-300"
+                >
+                  <i className="fa-solid fa-bell text-lg"></i>
+                </button>
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+              </div>
+            </div>
+          </div>
+        </header>
 
-        {/* Balance Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-10 border border-slate-200 relative overflow-hidden">
+        {/* Current Balance Section */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-8 border border-blue-200 mb-8 relative overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -287,65 +565,213 @@ function Balance() {
               <p className="text-red-500">Error: {error}</p>
             </div>
           ) : (
-            <>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full"></div>
-              
-              {/* Notification Bell Icon */}
-              <button
-                onClick={() => setShowNotifications(true)}
-                className="absolute top-6 right-6 z-20 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:shadow-lg transition-all duration-200 hover:scale-105"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
-
-              <h2 className="text-xl font-semibold text-slate-700 mb-4 relative z-10">Current Balance</h2>
-              <div className="flex items-end mb-2 relative z-10">
-                <span className="text-5xl md:text-6xl font-bold text-blue-600 mr-3">{balance}</span>
-                <span className="text-lg text-slate-600 mb-2">points</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center mb-6">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mr-6">
+                    <i className="fa-solid fa-wallet text-primary text-2xl"></i>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Current Balance</h2>
+                    <p className="text-gray-600">Your available points</p>
+                  </div>
+                </div>
+                <div className="flex items-baseline space-x-3">
+                  <span className="text-5xl font-bold text-primary">{balance}</span>
+                  <span className="text-xl text-gray-600 font-medium">points</span>
+                </div>
+                <p className="text-gray-600 mt-4">Ready to use for your purchases</p>
               </div>
-              <p className="text-slate-500 relative z-10">Your points are ready to use</p>
-            </>
+              <div className="text-right">
+                <div className="bg-white rounded-2xl p-6 shadow-soft">
+                  <div className="text-sm text-gray-600 mb-1">Last purchase</div>
+                  <div className="text-lg font-semibold text-gray-900">15 Nov 2024</div>
+                  <div className="text-sm text-accent">+200 points</div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Offers Section */}
-        <div className="mb-6">
-          <h3 className="text-2xl font-semibold text-slate-800 mb-6 text-center md:text-left">
-            Need more points?
-          </h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-            {offers.map((offer) => (
-              <div
-                key={offer.points}
-                className="bg-white rounded-xl shadow-md border border-slate-200 p-6 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="mb-4 w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+        {/* Packages Section */}
+        <div id="packages-section" className="mb-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Buy Points</h2>
+              <p className="text-gray-600 mt-1">Choose the package that suits you best</p>
+            </div>
+            <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+              <i className="fa-solid fa-info-circle mr-2"></i>
+              1 point = 0.5 dh discount
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Starter Package */}
+            <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-card hover:shadow-card-hover transition-all duration-300 hover:scale-105">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-coral/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fa-solid fa-star text-coral text-2xl"></i>
                 </div>
-                
-                <p className="text-2xl font-bold text-slate-800 mb-2">
-                  {offer.points} points
-                </p>
-                <p className="text-lg text-slate-600 mb-5">{offer.price}</p>
-                <button className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Starter</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">100</span>
+                  <span className="text-lg text-gray-600 ml-2">points</span>
+                </div>
+                <div className="text-3xl font-bold text-coral mb-6">50 DH</div>
+                <ul className="space-y-3 mb-8 text-left">
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    100 discount points
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    Valid 6 months
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    Email support
+                  </li>
+                </ul>
+                <button className="w-full py-4 bg-coral text-white rounded-2xl hover:bg-coral/90 transition-colors font-semibold">
                   Buy Now
                 </button>
               </div>
-            ))}
+            </div>
+
+            {/* Professional Package - Popular */}
+            <div className="bg-white rounded-3xl p-8 border-2 border-coral shadow-card hover:shadow-card-hover transition-all duration-300 hover:scale-105 relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span className="bg-coral text-white px-6 py-2 rounded-full text-sm font-semibold">Most Popular</span>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-coral/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fa-solid fa-crown text-coral text-2xl"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Professional</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">300</span>
+                  <span className="text-lg text-gray-600 ml-2">points</span>
+                </div>
+                <div className="mb-2">
+                  <span className="text-3xl font-bold text-coral">150 DH</span>
+                  <span className="text-lg text-gray-400 line-through ml-2">200 DH</span>
+                </div>
+                <div className="text-sm text-accent font-medium mb-6">Save 50 DH</div>
+                <ul className="space-y-3 mb-8 text-left">
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    300 discount points
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    Valid 12 months
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    Priority support
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    Advanced statistics
+                  </li>
+                </ul>
+                <button className="w-full py-4 bg-coral text-white rounded-2xl hover:bg-coral/90 transition-colors font-semibold">
+                  Buy Now
+                </button>
+              </div>
+            </div>
+
+            {/* Enterprise Package */}
+            <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-card hover:shadow-card-hover transition-all duration-300 hover:scale-105">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-purple/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fa-solid fa-gem text-purple text-2xl"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Enterprise</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">500</span>
+                  <span className="text-lg text-gray-600 ml-2">points</span>
+                </div>
+                <div className="mb-2">
+                  <span className="text-3xl font-bold text-purple">250 DH</span>
+                  <span className="text-lg text-gray-400 line-through ml-2">300 DH</span>
+                </div>
+                <div className="text-sm text-accent font-medium mb-6">Save 50 DH</div>
+                <ul className="space-y-3 mb-8 text-left">
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    500 discount points
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    Valid 18 months
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    24/7 support
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <i className="fa-solid fa-check text-accent mr-3"></i>
+                    API access
+                  </li>
+                </ul>
+                <button className="w-full py-4 bg-purple text-white rounded-2xl hover:bg-purple/90 transition-colors font-semibold">
+                  Buy Now
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        
-        {/* Additional Info */}
-        <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100 mt-10">
-          <h4 className="text-lg font-semibold text-slate-800 mb-3">How to use your points</h4>
-          <p className="text-slate-600">
-            Your points can be used to purchase products in our store. 1 point = 0.5 dh discount on your purchases.
-          </p>
+
+        {/* Info Section */}
+        <div className="bg-white rounded-3xl p-8 border border-gray-200 mb-8">
+          <div className="flex items-start space-x-6">
+            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+              <i className="fa-solid fa-lightbulb text-primary text-xl"></i>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">How to use your points?</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i className="fa-solid fa-tag text-coral text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Discount on purchases</h4>
+                    <p className="text-gray-600 text-sm">1 point = 0.5 dh discount on your purchases in our store</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i className="fa-solid fa-bolt text-accent text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Instant application</h4>
+                    <p className="text-gray-600 text-sm">Points are automatically applied at checkout</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-purple/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i className="fa-solid fa-calendar text-purple text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">12 months validity</h4>
+                    <p className="text-gray-600 text-sm">All purchased points are valid for 12 months</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i className="fa-solid fa-shield-alt text-primary text-sm"></i>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Secure transactions</h4>
+                    <p className="text-gray-600 text-sm">All point purchases are secure and encrypted</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1048,97 +1474,145 @@ function Leads() {
 
 export default function OwnerPanel() {
   const [mainSection, setMainSection] = useState('properties');
-  const [subSection, setSubSection] = useState('boutique');
+    const [userData, setUserData] = useState({
+    name: 'Youssef Alami', // Default fallback
+    photo: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg', // Default fallback
+    role: 'Propriétaire'
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user data from backend
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:8000/api/user', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            setUserData({
+              name: data.user.name || 'Youssef Alami',
+              photo: data.user.photo || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+              role: data.user.role || 'Propriétaire'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Handle logout
+  const handleLogout = () => {
+    // Add your logout logic here
+    localStorage.removeItem('token');
+    localStorage.removeItem('ownerToken');
+    window.location.href = '/'; // Redirect to login page
+  };
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 shadow-lg flex flex-col py-10 px-6 sticky top-0 h-screen">
-        <div className="mb-10 flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-            <i className="fa-solid fa-home text-white text-lg"></i>
+      <aside className="w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
+        <div className="p-6 border-b border-gray-200">
+          <div className="text-xl font-bold text-primary flex items-center">
+            <i className="fa-solid fa-home mr-2"></i>
+            PropertyAI
           </div>
-          <span className="ml-3 text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">Owner Panel</span>
+          <p className="text-sm text-gray-600 mt-1">Tableau de bord propriétaire</p>
         </div>
-        <nav className="flex flex-col gap-2">
-          <button
-            onClick={() => { setMainSection('properties'); setSubSection('boutique'); }}
-            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-              mainSection === 'properties'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            Mes propriétés
-          </button>
-          <button
-            onClick={() => setMainSection('balance')}
-            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-              mainSection === 'balance'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            Balance
-          </button>
-          <button
-            onClick={() => setMainSection('leads')}
-            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-              mainSection === 'leads'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            Leads
-          </button>
-                    <button
-            onClick={() => setMainSection('contact')}
-            className={`text-left px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-              mainSection === 'contact'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            Contact
-          </button>
-        </nav>
-      </aside>
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col">
-        {mainSection === 'properties' && (
-          <div>
-            {/* Subsection Tabs */}
-            <div className="flex gap-4 px-8 pt-8">
-              <button
-                onClick={() => setSubSection('boutique')}
-                className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 ${
-                  subSection === 'boutique'
-                    ? 'bg-blue-500 text-white shadow'
-                    : 'bg-slate-100 text-slate-700 hover:bg-blue-100'
-                }`}
-              >
-                Boutique
-              </button>
-              <button
-                onClick={() => setSubSection('ajouter')}
-                className={`px-6 py-2 rounded-xl font-medium transition-all duration-200 ${
-                  subSection === 'ajouter'
-                    ? 'bg-blue-500 text-white shadow'
-                    : 'bg-slate-100 text-slate-700 hover:bg-blue-100'
-                }`}
-              >
-                Ajouter
-              </button> 
-
-              
-            </div>
-            {/* Subsection Content */}
-            <div>
-              {subSection === 'boutique' && <Boutique />}
-              {subSection === 'ajouter' && <AddProperty />}
-            </div>
+        
+        <nav className="p-4">
+          <div className="space-y-2">
+            <button
+              onClick={() => setMainSection('properties')}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                mainSection === 'properties'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-building mr-3 w-5"></i>
+              Mes Propriétés
+            </button>
+            <button
+              onClick={() => setMainSection('balance')}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                mainSection === 'balance'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-wallet mr-3 w-5"></i>
+              Balance
+              <span className="ml-auto bg-accent text-white text-xs px-2 py-1 rounded-full">450 DH</span>
+            </button>
+            <button
+              onClick={() => setMainSection('leads')}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                mainSection === 'leads'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-users mr-3 w-5"></i>
+              Leads
+              <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">12</span>
+            </button>
+            <button
+              onClick={() => setMainSection('contact')}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                mainSection === 'contact'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-envelope mr-3 w-5"></i>
+              Contact
+            </button>
           </div>
-        )}
+        </nav>
+
+<div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+  <div className="flex items-center space-x-3">
+    <img 
+      src={userData.photo} 
+      alt="Profile" 
+      className="w-10 h-10 rounded-full object-cover" 
+    />
+    <div className="flex-1">
+      <div className="text-sm font-semibold text-gray-900">
+        {loading ? 'Chargement...' : userData.name}
+      </div>
+      <div className="text-xs text-gray-600">
+        {userData.role}
+      </div>
+    </div>
+    <button 
+      onClick={handleLogout}
+      className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+    >
+      <i className="fa-solid fa-sign-out-alt"></i>
+    </button>
+  </div>
+</div>
+      </aside>
+
+      {/* Main Content - Add ml-64 to account for sidebar width */}
+      <main className="flex-1 ml-64">
+        {mainSection === 'properties' && <Boutique />}
         {mainSection === 'balance' && <Balance />}
         {mainSection === 'leads' && <Leads />} 
         {mainSection === 'contact' && <ContactOwner/>}

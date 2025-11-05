@@ -92,94 +92,119 @@ export default function UserPanel() {
     navigate('/login_user');
   };  
 
+  const [userData, setUserData] = useState({
+  name: 'Sarah Bennani',
+  photo: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
+  role: 'Client'
+});
+const [loading, setLoading] = useState(true);
+
+// Fetch user data from backend
+useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/user', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUserData({
+            name: data.user.name || 'Sarah Bennani',
+            photo: data.user.photo || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
+            role: data.user.role || 'Client'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchUserData();
+}, []);
+
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
-      {/* Fixed Sidebar - Consistent Width */}
-      <aside className="w-80 flex-shrink-0 bg-white/80 backdrop-blur-xl border-r border-slate-200/60 shadow-xl flex flex-col py-8 px-6 sticky top-0 h-screen">
-        <div className="mb-12 flex items-center px-2">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-            <i className="fa-solid fa-user text-white text-xl"></i>
+      {/* Fixed Sidebar */}
+      <aside className="w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
+        <div className="p-6 border-b border-gray-200">
+          <div className="text-xl font-bold text-primary flex items-center">
+            <i className="fa-solid fa-home mr-2"></i>
+            PropertyAI
           </div>
-          <div className="ml-4">
-            <span className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-              Espace Client
-            </span>
-            <p className="text-sm text-slate-500 mt-1">Gestion de votre compte</p>
-          </div>
+          <p className="text-sm text-gray-600 mt-1">Espace Client</p>
         </div>
         
-        <nav className="flex flex-col gap-3 mb-6">
-          <button
-            onClick={() => setSection('mes-demandes')}
-            className={`group text-left px-4 py-4 rounded-2xl font-medium transition-all duration-300 ${
-              section === 'mes-demandes'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25'
-                : 'text-slate-700 hover:bg-white hover:shadow-lg hover:border hover:border-slate-200/60'
-            }`}
-          >
-            <div className="flex items-center">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 transition-all ${
-                section === 'mes-demandes' ? 'bg-white/20' : 'bg-blue-50 text-blue-600'
-              }`}>
-                <i className="fa-solid fa-list-check text-lg"></i>
-              </div>
-              <span className="font-semibold">Mes Demandes</span>
-            </div>
-          </button>
-          
-          <button
-            onClick={() => setSection('profil')}
-            className={`group text-left px-4 py-4 rounded-2xl font-medium transition-all duration-300 ${
-              section === 'profil'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25'
-                : 'text-slate-700 hover:bg-white hover:shadow-lg hover:border hover:border-slate-200/60'
-            }`}
-          >
-            <div className="flex items-center">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 transition-all ${
-                section === 'profil' ? 'bg-white/20' : 'bg-blue-50 text-blue-600'
-              }`}>
-                <i className="fa-solid fa-user-gear text-lg"></i>
-              </div>
-              <span className="font-semibold">Profil</span>
-            </div>
-          </button>
-        </nav>
-        
-        <button
-          onClick={handleLogout}
-          className="mt-auto group px-4 py-4 rounded-2xl font-medium bg-white border border-slate-200 text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-300 shadow-sm hover:shadow-md"
-        >
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mr-3 bg-red-50 text-red-500 group-hover:bg-red-100 transition-all">
-              <i className="fa-solid fa-arrow-right-from-bracket text-lg"></i>
-            </div>
-            <span className="font-semibold">Déconnexion</span>
+        <nav className="p-4">
+          <div className="space-y-2">
+            <button
+              onClick={() => setSection('mes-demandes')}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                section === 'mes-demandes'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-list-check mr-3 w-5"></i>
+              Mes Demandes
+            </button>
+            
+            <button
+              onClick={() => setSection('profil')}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                section === 'profil'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-user-gear mr-3 w-5"></i>
+              Profil
+            </button>
           </div>
-        </button>
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={userData.photo} 
+              alt="Profile" 
+              className="w-10 h-10 rounded-full object-cover" 
+            />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-gray-900">
+                {loading ? 'Chargement...' : userData.name}
+              </div>
+              <div className="text-xs text-gray-600">
+                {userData.role}
+              </div>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+            >
+              <i className="fa-solid fa-sign-out-alt"></i>
+            </button>
+          </div>
+        </div>
       </aside>
 
-      {/* Main Content - Fixed to prevent layout shift */}
-      <main className="flex-1 min-w-0 p-8">
+      {/* Main Content - Fixed with proper margin and scrolling */}
+      <main className="flex-1 ml-64 min-w-0 p-8 overflow-auto">
         {section === 'mes-demandes' && (
           <div className="w-full max-w-full">
             {/* Header Card */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-3xl shadow-2xl shadow-blue-500/25 p-8 mb-8 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">Mes Demandes</h1>
-                  <p className="text-blue-100 text-lg opacity-90">
-                    Suivez l'état de vos réservations de propriétés
-                  </p>
-                </div>
-                <div className="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-bold text-center">{demandes.length}</div>
-                  <div className="text-blue-100 text-sm">Demandes totales</div>
-                </div>
-              </div>
-            </div>
 
-            {/* Enhanced Table Card - Made smaller */}
+
+            {/* Enhanced Table Card */}
             <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 overflow-hidden">
               <div className="p-6">
                 {/* Smaller header */}
@@ -283,179 +308,279 @@ export default function UserPanel() {
 
         {section === 'profil' && (
           <div className="w-full max-w-full">
-            {/* Enhanced Header Section */}
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl shadow-2xl shadow-purple-500/25 p-8 mb-8 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">Profil Utilisateur</h1>
-                  <p className="text-indigo-100 text-lg opacity-90">
-                    Gérez vos informations personnelles et préférences
-                  </p>
-                </div>
-                <div className="bg-white/20 rounded-2xl p-4 backdrop-blur-sm text-center">
-                  <div className="text-2xl font-bold">{profile.name ? profile.name.split(' ')[0] : '...'}</div>
-                  <div className="text-indigo-100 text-sm">Bienvenue</div>
-                </div>
-              </div>
-            </div>
 
-            {/* Enhanced Profile Form */}
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 overflow-hidden">
-              <div className="p-8">
-                <form onSubmit={handleProfileSubmit} className="space-y-8">
-                  {/* Personal Information Section */}
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100/60">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
-                        <i className="fa-solid fa-user text-white text-sm"></i>
-                      </div>
-                      Informations Personnelles
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <label className="block text-sm font-semibold text-slate-700">Nom complet</label>
-                        <div className="relative group">
-                          <input
-                            type="text"
-                            name="name"
-                            value={profile.name}
-                            onChange={handleProfileChange}
-                            className="w-full px-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-slate-400 group-hover:border-slate-400 shadow-sm"
-                            placeholder="Votre nom complet"
-                          />
-                          <div className="absolute right-3 top-3.5 text-slate-400">
-                            <i className="fa-solid fa-user text-sm"></i>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="space-y-3">
-                        <label className="block text-sm font-semibold text-slate-700">Adresse email</label>
-                        <div className="relative group">
-                          <input
-                            type="email"
-                            name="email"
-                            value={profile.email}
-                            onChange={handleProfileChange}
-                            className="w-full px-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-slate-400 group-hover:border-slate-400 shadow-sm"
-                            placeholder="votre@email.com"
-                          />
-                          <div className="absolute right-3 top-3.5 text-slate-400">
-                            <i className="fa-solid fa-envelope text-sm"></i>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 space-y-3">
-                      <label className="block text-sm font-semibold text-slate-700">Numéro de téléphone</label>
-                      <div className="relative group">
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={profile.phone}
-                          onChange={handleProfileChange}
-                          className="w-full px-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-slate-400 group-hover:border-slate-400 shadow-sm"
-                          placeholder="+212 6 00 00 00 00"
-                        />
-                        <div className="absolute right-3 top-3.5 text-slate-400">
-                          <i className="fa-solid fa-phone text-sm"></i>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Preferences Section */}
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100/60">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
-                        <i className="fa-solid fa-heart text-white text-sm"></i>
-                      </div>
-                      Préférences
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <label className="block text-sm font-semibold text-slate-700">Quartiers favoris</label>
-                        <div className="relative group">
-                          <input
-                            type="text"
-                            name="favoriteNeighborhoods"
-                            value={profile.favoriteNeighborhoods}
-                            onChange={handleProfileChange}
-                            className="w-full px-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-slate-400 group-hover:border-slate-400 shadow-sm"
-                            placeholder="Ex: Gauthier, Oasis"
-                          />
-                          <div className="absolute right-3 top-3.5 text-slate-400">
-                            <i className="fa-solid fa-location-dot text-sm"></i>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <label className="block text-sm font-semibold text-slate-700">Type de propriété préféré</label>
-                        <div className="relative group">
-                          <input
-                            type="text"
-                            name="preferredType"
-                            value={profile.preferredType}
-                            onChange={handleProfileChange}
-                            className="w-full px-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder-slate-400 group-hover:border-slate-400 shadow-sm"
-                            placeholder="Ex: Appartement, Villa"
-                          />
-                          <div className="absolute right-3 top-3.5 text-slate-400">
-                            <i className="fa-solid fa-home text-sm"></i>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notifications Section */}
-                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100/60">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
-                        <i className="fa-solid fa-bell text-white text-sm"></i>
-                      </div>
-                      Notifications
-                    </h3>
-                    
-                    <div className="flex items-start space-x-4 p-4 bg-white rounded-xl border border-orange-200/60 shadow-sm">
-                      <div className="flex items-center h-5 mt-1">
-                        <input
-                          type="checkbox"
-                          name="emailAlerts"
-                          checked={profile.emailAlerts}
-                          onChange={handleProfileChange}
-                          id="emailAlerts"
-                          className="h-5 w-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label htmlFor="emailAlerts" className="block font-semibold text-slate-800 text-lg mb-1">
-                          Alertes par email
-                        </label>
-                        <p className="text-slate-600 text-sm leading-relaxed">
-                          Recevez des notifications instantanées lorsque de nouvelles propriétés correspondant à vos critères sont disponibles.
-                          Restez informé des opportunités immobilières en temps réel.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Enhanced Submit Button */}
-                  <div className="flex justify-center pt-4">
-                    <button
-                      type="submit"
-                      className="group px-12 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center"
-                    >
-                      <i className="fa-solid fa-floppy-disk mr-3 group-hover:rotate-12 transition-transform"></i>
-                      Sauvegarder les modifications
-                      <i className="fa-solid fa-arrow-right ml-3 group-hover:translate-x-1 transition-transform"></i>
+            <div className="max-w-6xl mx-auto space-y-8">
+              {/* Profile Header Card */}
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
+                <div className="flex items-center space-x-6">
+                  <div className="relative">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+                    <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+                      <i className="fa-solid fa-camera text-sm"></i>
                     </button>
                   </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-slate-800">{profile.name || 'Sarah Bennani'}</h2>
+                    <p className="text-slate-600 mt-1">Membre depuis janvier 2024</p>
+                    <div className="flex items-center mt-3 space-x-4">
+                      <span className="flex items-center text-sm text-slate-600">
+                        <i className="fa-solid fa-calendar-check mr-2 text-blue-500"></i>
+                        8 demandes
+                      </span>
+                      <span className="flex items-center text-sm text-slate-600">
+                        <i className="fa-solid fa-heart mr-2 text-red-500"></i>
+                        12 favoris
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Information Section */}
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <i className="fa-solid fa-user text-blue-600 text-lg"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800">Informations personnelles</h3>
+                    <p className="text-slate-600 text-sm">Mettez à jour vos informations de contact</p>
+                  </div>
+                </div>
+                
+                <form onSubmit={handleProfileSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Prénom</label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={profile.name}
+                        onChange={handleProfileChange}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                        placeholder="Votre prénom"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={profile.email}
+                        onChange={handleProfileChange}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                        placeholder="votre@email.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={profile.phone}
+                        onChange={handleProfileChange}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                        placeholder="+212 6 12 34 56 78"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Ville</label>
+                      <select 
+                        name="city"
+                        value={profile.city}
+                        onChange={handleProfileChange}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                      >
+                        <option>Casablanca</option>
+                        <option>Rabat</option>
+                        <option>Marrakech</option>
+                        <option>Tanger</option>
+                      </select>
+                    </div>
+                  </div>
                 </form>
+              </div>
+
+              {/* Preferences Section */}
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                    <i className="fa-solid fa-heart text-green-600 text-lg"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800">Préférences de recherche</h3>
+                    <p className="text-slate-600 text-sm">Personnalisez vos critères de recherche</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-3">Quartiers favoris</label>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center">
+                        Gauthier
+                        <i className="fa-solid fa-times ml-2 cursor-pointer hover:text-blue-500"></i>
+                      </span>
+                      <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center">
+                        Maarif
+                        <i className="fa-solid fa-times ml-2 cursor-pointer hover:text-blue-500"></i>
+                      </span>
+                      <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center">
+                        Ain Diab
+                        <i className="fa-solid fa-times ml-2 cursor-pointer hover:text-blue-500"></i>
+                      </span>
+                      <button className="px-4 py-2 border-2 border-dashed border-slate-300 text-slate-600 rounded-full text-sm hover:border-blue-500 hover:text-blue-500 transition-colors">
+                        <i className="fa-solid fa-plus mr-2"></i>
+                        Ajouter
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-3">Types de propriétés</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          name="apartment"
+                          checked={profile.preferredType === 'apartment'}
+                          onChange={handleProfileChange}
+                          className="sr-only" 
+                        />
+                        <div className="w-5 h-5 bg-blue-500 rounded border-2 border-blue-500 flex items-center justify-center mr-3">
+                          <i className="fa-solid fa-check text-white text-xs"></i>
+                        </div>
+                        <span className="text-sm font-medium">Appartement</span>
+                      </label>
+                      <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          name="villa"
+                          checked={profile.preferredType === 'villa'}
+                          onChange={handleProfileChange}
+                          className="sr-only" 
+                        />
+                        <div className="w-5 h-5 bg-white rounded border-2 border-slate-300 mr-3"></div>
+                        <span className="text-sm font-medium">Villa</span>
+                      </label>
+                      <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          name="studio"
+                          checked={profile.preferredType === 'studio'}
+                          onChange={handleProfileChange}
+                          className="sr-only" 
+                        />
+                        <div className="w-5 h-5 bg-blue-500 rounded border-2 border-blue-500 flex items-center justify-center mr-3">
+                          <i className="fa-solid fa-check text-white text-xs"></i>
+                        </div>
+                        <span className="text-sm font-medium">Studio</span>
+                      </label>
+                      <label className="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          name="duplex"
+                          checked={profile.preferredType === 'duplex'}
+                          onChange={handleProfileChange}
+                          className="sr-only" 
+                        />
+                        <div className="w-5 h-5 bg-white rounded border-2 border-slate-300 mr-3"></div>
+                        <span className="text-sm font-medium">Duplex</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Budget max (Location)</label>
+                      <select 
+                        name="maxBudget"
+                        value={profile.maxBudget}
+                        onChange={handleProfileChange}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                      >
+                        <option>Moins de 3,000 DH</option>
+                        <option>3,000 - 5,000 DH</option>
+                        <option>5,000 - 8,000 DH</option>
+                        <option>Plus de 8,000 DH</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre de chambres</label>
+                      <select 
+                        name="bedrooms"
+                        value={profile.bedrooms}
+                        onChange={handleProfileChange}
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                      >
+                        <option>1 chambre</option>
+                        <option>2-3 chambres</option>
+                        <option>4+ chambres</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notifications Section */}
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4">
+                    <i className="fa-solid fa-bell text-orange-600 text-lg"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800">Notifications</h3>
+                    <p className="text-slate-600 text-sm">Gérez vos préférences de notification</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl">
+                    <div>
+                      <h4 className="font-semibold text-slate-800">Nouvelles propriétés</h4>
+                      <p className="text-sm text-slate-600">Recevoir des alertes pour les nouvelles propriétés correspondant à vos critères</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        name="newProperties"
+                        checked={profile.emailAlerts}
+                        onChange={handleProfileChange}
+                        className="sr-only peer" 
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl">
+                    <div>
+                      <h4 className="font-semibold text-slate-800">Confirmations de visite</h4>
+                      <p className="text-sm text-slate-600">Recevoir des confirmations et rappels pour vos visites</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        name="visitConfirmations"
+                        checked={profile.visitConfirmations}
+                        onChange={handleProfileChange}
+                        className="sr-only peer" 
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Section */}
+              <div className="flex items-center justify-center pt-4">
+                <button 
+                  onClick={handleProfileSubmit}
+                  className="px-12 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-lg rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <i className="fa-solid fa-save mr-3"></i>
+                  Sauvegarder les modifications
+                </button>
               </div>
             </div>
           </div>

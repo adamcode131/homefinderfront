@@ -2,20 +2,18 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Home() {
-
-  const [query,setQuery] = useState('');   
+  const [query, setQuery] = useState('');   
   const [propertyIds, setPropertyIds] = useState([]); 
   const [isSearching, setIsSearching] = useState(false);
-  const [filter,setFilter] = useState('');
-  const [suggestions,setSuggestions] = useState([]);
+  const [filter, setFilter] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [location,setLocation] = useState({latitude : null , longitude : null})
-  const [autourDeMoi, setAutourDeMoi] = useState(false); // New state for toggle
+  const [location, setLocation] = useState({ latitude: null, longitude: null });
+  const [autourDeMoi, setAutourDeMoi] = useState(false);
   const navigate = useNavigate();
 
   // geoLocation added
-
-    useEffect(() => {
+  useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -23,7 +21,6 @@ export default function Home() {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
-          console.log(location.longitude)
         },
         (error) => {
           console.warn("Geolocation error:", error);
@@ -34,24 +31,20 @@ export default function Home() {
     }
   }, []);
 
-  
   const handleSearch = (param) => {
-    // e.preventDefault();
-    const search  = query || param;
+    const search = query || param;
     
     if (!search?.trim()) return;
     
-    // Show loading immediately
     setIsSearching(true);
     setShowSuggestions(false);
     navigate('/loading', { 
       state: { 
         searchQuery: search,
-        timestamp: Date.now() // Prevent caching
+        timestamp: Date.now()
       } 
     });
 
-    // Prepare request body
     const requestBody = {
       chatInput: search,
       token: localStorage.getItem('token'),
@@ -59,12 +52,10 @@ export default function Home() {
       longitude: location.longitude
     };
 
-    // Add radius if "autour de moi" is enabled
     if (autourDeMoi) {
       requestBody.radius = 50;
     }
 
-    // Then make the API call
     fetch('https://n8n.manypilots.com/webhook/search', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -75,20 +66,17 @@ export default function Home() {
     })
       .then(res => res.json())
       .then(data => {
-        console.log("Received:", data);
         const ids = data.ids || [];
-        // Navigate to results with the data
         navigate('/result', { 
           state: { 
             propertyIds: ids,
             searchQuery: search,
-            autourDeMoi: autourDeMoi // Pass the toggle state to results
+            autourDeMoi: autourDeMoi
           } 
         });
       })
       .catch(err => {
         console.error("Fetch error:", err);
-        // If error, redirect back to home or show error
         navigate('/', { state: { error: "Search failed. Please try again." } });
       })
       .finally(() => {
@@ -96,7 +84,7 @@ export default function Home() {
       });
   };
 
-    useEffect(() => {
+  useEffect(() => {
     if (query.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -104,11 +92,15 @@ export default function Home() {
     }
 
     const timeout = setTimeout(async () => {
-      const res = await fetch(`http://localhost:8000/api/search-suggestions?q=${query}`);
-      const data = await res.json();
-      setSuggestions(data);
-      setShowSuggestions(data.length > 0);
-    }, 300); // debounce
+      try {
+        const res = await fetch(`http://localhost:8000/api/search-suggestions?q=${query}`);
+        const data = await res.json();
+        setSuggestions(data);
+        setShowSuggestions(data.length > 0);
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
+      }
+    }, 300);
 
     return () => clearTimeout(timeout);
   }, [query]);
@@ -126,7 +118,6 @@ export default function Home() {
   };
 
   const handleInputBlur = () => {
-    // Delay hiding to allow for click events
     setTimeout(() => setShowSuggestions(false), 200);
   };
 
@@ -134,6 +125,21 @@ export default function Home() {
     setAutourDeMoi(!autourDeMoi);
   };
 
+  // Logo component to ensure consistent usage
+  const LogoIcon = ({ className = "w-6 h-6" }) => (
+    <img 
+      src="./logo.svg" 
+      alt="Daryol Logo" 
+      className={className}
+      onError={(e) => {
+        // Fallback to home icon if image fails to load
+        e.target.style.display = 'none';
+        const fallback = document.createElement('i');
+        fallback.className = 'fa-solid fa-home text-white';
+        e.target.parentNode.appendChild(fallback);
+      }}
+    />
+  );
 
   return (
     <div id="main-container" className="min-h-[900px] bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -145,7 +151,7 @@ export default function Home() {
         {/* Logo */}
         <div className="flex items-center group">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-            <i className="fa-solid fa-home text-white text-lg"></i>
+            <LogoIcon className="w-6 h-6" />
           </div>
           <span className="ml-3 text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
             Daryol
@@ -164,32 +170,30 @@ export default function Home() {
           </div>
 
           {/* Owner Section */}
-<div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
+            {/* Auth Buttons */}
+            <div className="flex gap-3">
+              <Link to="/signup_owner">
+                <button className="bg-gradient-to-r from-blue-500 to-blue-600 
+                  hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl 
+                  text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
+                  transform hover:-translate-y-0.5 border border-blue-400/20">
+                  <i className="fa-solid fa-building mr-2"></i>
+                  Annonceur
+                </button>
+              </Link>
 
-
-  {/* Auth Buttons */}
-  <div className="flex gap-3">
-    <Link to="/signup_owner">
-      <button className="bg-gradient-to-r from-blue-500 to-blue-600 
-        hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl 
-        text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
-        transform hover:-translate-y-0.5 border border-blue-400/20">
-        <i className="fa-solid fa-building mr-2"></i>
-        Annonceur
-      </button>
-    </Link>
-
-    <Link to="/signup_user">
-      <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 
-        hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl 
-        text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
-        transform hover:-translate-y-0.5 border border-emerald-400/20">
-        <i className="fa-solid fa-user mr-2"></i>
-        Client
-      </button>
-    </Link>
-  </div>
-</div>
+              <Link to="/signup_user">
+                <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 
+                  hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl 
+                  text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
+                  transform hover:-translate-y-0.5 border border-emerald-400/20">
+                  <i className="fa-solid fa-user mr-2"></i>
+                  Client
+                </button>
+              </Link>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -198,9 +202,7 @@ export default function Home() {
         {/* Hero Logo Section */}
         <div className="mb-12 text-center">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-all duration-300">
-              <i className="fa-solid fa-home text-white text-3xl"></i>
-            </div>
+              <LogoIcon className="w-20 h-20" />
           </div>
           <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">Daryol</h1>
           <p className="text-slate-500 text-lg font-light">Powered by Artificial Intelligence</p>
@@ -215,7 +217,7 @@ export default function Home() {
                 <i className="fa-solid fa-search text-slate-400 text-xl group-focus-within:text-blue-500 transition-colors duration-200"></i>
               </div>
               <input 
-                onChange={(e)=>setQuery(e.target.value)} 
+                onChange={(e) => setQuery(e.target.value)} 
                 onFocus={handleInputFocus}
                 onBlur={handleInputBlur}
                 value={query}
@@ -223,7 +225,10 @@ export default function Home() {
                 placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" 
                 className="flex-1 py-6 px-3 text-xl text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" 
               />
-              <button onClick={handleSearch} className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium">
+              <button 
+                onClick={() => handleSearch(query)} 
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
+              >
                 <i className="fa-solid fa-search mr-2"></i>Search
               </button>
             </div>
@@ -292,16 +297,16 @@ export default function Home() {
           
           {/* Quick Suggestions */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
-            <button onClick={()=>{handleSearch("1 Chambre") }} className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("1 Chambre")} className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-bed mr-2 text-blue-500"></i>1 Chambre
             </button>
-            <button onClick={()=>{handleSearch("Maarif")}} className="suggestion-pulse bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-green-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("Maarif")} className="suggestion-pulse bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-green-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-location-dot mr-2 text-green-500"></i>Maarif
             </button>
-            <button onClick={()=>{handleSearch("moins de 5000dh")}} className="suggestion-pulse bg-white hover:bg-yellow-50 text-slate-700 hover:text-yellow-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("moins de 5000dh")} className="suggestion-pulse bg-white hover:bg-yellow-50 text-slate-700 hover:text-yellow-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-coins mr-2 text-yellow-500"></i>Moins de 5000 DH
             </button>
-            <button onClick={()=>{handleSearch("plus de 200metre")}} className="suggestion-pulse bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("plus de 200metre")} className="suggestion-pulse bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-car mr-2 text-purple-500"></i>Plus de 200 métre carré
             </button>
           </div>
@@ -344,7 +349,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-                <i className="fa-solid fa-home text-white text-sm"></i>
+                <LogoIcon className="w-4 h-4" />
               </div>
               <span className="text-xl font-semibold text-slate-800">Daryol</span>
             </div>

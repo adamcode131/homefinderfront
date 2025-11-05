@@ -12,40 +12,48 @@ export default function NotificationsPanel({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  const fetchNotifications = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:8000/api/get-notifications`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-      });
+const fetchNotifications = async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`http://localhost:8000/api/get-notifications`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch notifications");
-      }
-
-      const data = await response.json();
-      // Filter out notifications where both added_points and deducted_points are 0 or null AND no lead_id
-      const filtered = (data || []).filter(
-        (n) =>
-          (n.added_points && n.added_points !== 0) ||
-          (n.deducted_points && n.deducted_points !== 0) ||
-          n.lead_id // Include notifications with lead_id (new leads)
-      );
-
-      setNotifications(filtered.reverse());
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error("Failed to fetch notifications");
     }
-  };
+
+    const data = await response.json();
+    
+    // Filter out notifications where both added_points and deducted_points are 0 or null AND no lead_id
+    const filtered = (data || []).filter(
+      (n) =>
+        (n.added_points && n.added_points !== 0) ||
+        (n.deducted_points && n.deducted_points !== 0) ||
+        n.lead_id // Include notifications with lead_id (new leads)
+    );
+
+    // Sort by created_at date in descending order (newest first)
+    const sorted = filtered.sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB - dateA; // Descending order (newest first)
+    });
+
+    setNotifications(sorted);
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const deleteNotification = async (notificationId) => {
     setDeletingId(notificationId);
