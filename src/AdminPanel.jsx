@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios' ; 
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminPanel() {
   const [section, setSection] = useState('dashboard');
@@ -10,7 +11,8 @@ export default function AdminPanel() {
   const [users,setUsers] = useState([]) ; 
   const [added_points , setAddedPoints] = useState(0);
   const [deducted_points , setDeductedPoints] = useState(0);
-  
+  const [user , setUser] = useState({})
+  const navigate  = useNavigate();
   const [refunds,setRefunds] = useState([]); 
   // VIEW PROFILE
   const [selectedUser, setSelectedUser] = useState(null);
@@ -413,6 +415,14 @@ const handleBalanceChange = (amount) => {
 
 
 
+  useEffect(()=>{
+    axios.get('http://localhost:8000/api/user',{headers : {Authorization : `Bearer ${localStorage.getItem('token')}`}})
+    .then((res) => {
+      setUser(res.data.user)  
+      console.log(res.data.user)
+    })
+  },[])
+
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -477,10 +487,10 @@ const handleBalanceChange = (amount) => {
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="flex items-center space-x-3">
-            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Admin" className="w-10 h-10 rounded-full object-cover" />
+            <img onClick={()=>{navigate('/admin-profile')}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
             <div className="flex-1">
-              <div className="text-sm font-semibold text-gray-900">Admin User</div>
-              <div className="text-xs text-gray-600">Administrator</div>
+              <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+              <div className="text-xs text-gray-600">{user.role}</div>
             </div>
           </div>
         </div>
