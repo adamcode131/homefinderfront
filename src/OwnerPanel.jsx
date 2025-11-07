@@ -1475,11 +1475,12 @@ function Leads() {
 export default function OwnerPanel() {
   const [mainSection, setMainSection] = useState('properties');
     const [userData, setUserData] = useState({
-    name: 'Youssef Alami', // Default fallback
-    photo: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg', // Default fallback
-    role: 'Propriétaire'
+    name: 'Chargement ...', // Default fallback
+    photo: 'user.png', // Default fallback
+    role: 'Owner'
   });
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Fetch user data from backend
   useEffect(() => {
@@ -1497,9 +1498,12 @@ export default function OwnerPanel() {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.user) {
+            const imagePath = data.user.image ?? data.user.photo ?? null;
+            const photoUrl = imagePath ? `http://localhost:8000/storage/${imagePath}` : 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg';
+
             setUserData({
               name: data.user.name || 'Youssef Alami',
-              photo: data.user.photo || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+              photo: photoUrl,
               role: data.user.role || 'Propriétaire'
             });
           }
@@ -1590,7 +1594,8 @@ export default function OwnerPanel() {
     <img 
       src={userData.photo} 
       alt="Profile" 
-      className="w-10 h-10 rounded-full object-cover" 
+      className="w-10 h-10 rounded-full object-cover cursor-pointer" 
+      onClick={() => navigate('/admin-profile')}
     />
     <div className="flex-1">
       <div className="text-sm font-semibold text-gray-900">

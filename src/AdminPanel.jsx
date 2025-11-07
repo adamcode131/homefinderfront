@@ -11,9 +11,13 @@ export default function AdminPanel() {
   const [users,setUsers] = useState([]) ; 
   const [added_points , setAddedPoints] = useState(0);
   const [deducted_points , setDeductedPoints] = useState(0);
-  const [user , setUser] = useState({})
+  const [user , setUser] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState(''); 
   const navigate  = useNavigate();
   const [refunds,setRefunds] = useState([]); 
+  const [propertySearch, setPropertySearch] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
   // VIEW PROFILE
   const [selectedUser, setSelectedUser] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -427,161 +431,238 @@ const handleBalanceChange = (amount) => {
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
-        <div className="p-6 border-b border-gray-200">
-          <div className="text-xl font-bold text-primary flex items-center">
-            <i className="fa-solid fa-home mr-2"></i>
-            <img src="./logo.svg" alt="" className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20" />
-          </div>
-          <p className="text-sm text-gray-600 mt-1">Admin Dashboard</p>
+    <aside className="w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center justify-center mb-2">
+          <img 
+            src="./logo.svg" 
+            alt="Company Logo" 
+            className="w-16 h-16 object-contain" 
+          />
         </div>
-        
-        <nav className="p-4">
-          <div className="space-y-2">
-            <button
-              onClick={() => setSection('dashboard')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                section === 'dashboard'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-chart-line mr-3 w-5"></i>
-              Dashboard
-            </button>
-            <button
-              onClick={() => setSection('users')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                section === 'users'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-users mr-3 w-5"></i>
-              Users
-            </button>
-            <button
-              onClick={() => setSection('not_validated_properties')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                section === 'not_validated_properties'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-clock mr-3 w-5"></i>
-              Pending Properties
-            </button>
-            <button
-              onClick={() => setSection('all_properties')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                section === 'all_properties'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-building mr-3 w-5"></i>
-              All Properties
-            </button>
-          </div>
-        </nav>
+        <p className="text-sm text-gray-600 text-center font-medium">Admin Dashboard</p>
+      </div>
+      
+      <nav className="p-4">
+        <div className="space-y-2">
+          <button
+            onClick={() => setSection('dashboard')}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+              section === 'dashboard'
+                ? 'text-primary bg-blue-50 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <i className="fa-solid fa-chart-line mr-3 w-5"></i>
+            Dashboard
+          </button>
+          <button
+            onClick={() => setSection('users')}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+              section === 'users'
+                ? 'text-primary bg-blue-50 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <i className="fa-solid fa-users mr-3 w-5"></i>
+            Users
+          </button>
+          <button
+            onClick={() => setSection('not_validated_properties')}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+              section === 'not_validated_properties'
+                ? 'text-primary bg-blue-50 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <i className="fa-solid fa-clock mr-3 w-5"></i>
+            Pending Properties
+          </button>
+          <button
+            onClick={() => setSection('all_properties')}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+              section === 'all_properties'
+                ? 'text-primary bg-blue-50 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <i className="fa-solid fa-building mr-3 w-5"></i>
+            All Properties
+          </button>
+        </div>
+      </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-          <div className="flex items-center space-x-3">
-            <img onClick={()=>{navigate('/admin-profile')}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
-            <div className="flex-1">
-              <div className="text-sm font-semibold text-gray-900">{user.name}</div>
-              <div className="text-xs text-gray-600">{user.role}</div>
-            </div>
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+        <div className="flex items-center space-x-3">
+          <img onClick={()=>{navigate('/admin-profile')}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
+          <div className="flex-1">
+            <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+            <div className="text-xs text-gray-600">{user.role}</div>
           </div>
         </div>
-      </aside>
+      </div>
+    </aside>
 
       {/* Main Content - Fixed to account for sidebar */}
       <main className="flex-1 ml-64 p-8">
-        {/* Pending Properties */}
-        {section === 'not_validated_properties' && (
-          <div className="w-full">
-            <header className="bg-white border-b border-gray-200">
-              <div className="px-8 py-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Pending Properties</h1>
-                    <p className="text-gray-600 mt-1">Review and validate property submissions</p>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-6 mb-6">
-                  <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-center space-x-3">
-                    <i className="fa-solid fa-clock text-orange-600"></i>
-                    <div>
-                      <div className="text-sm text-orange-600 font-medium">Pending</div>
-                      <div className="text-xl font-bold text-orange-700">{pendingProperties.length}</div>
-                    </div>
-                  </div>
-                  <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center space-x-3">
-                    <i className="fa-solid fa-check text-green-600"></i>
-                    <div>
-                      <div className="text-sm text-green-600 font-medium">Approved</div>
-                      <div className="text-xl font-bold text-green-700">142</div>
-                    </div>
-                  </div>
-                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center space-x-3">
-                    <i className="fa-solid fa-times text-red-600"></i>
-                    <div>
-                      <div className="text-sm text-red-600 font-medium">Rejected</div>
-                      <div className="text-xl font-bold text-red-700">23</div>
-                    </div>
-                  </div>
-                </div>
+      {/* Pending Properties */}
+      {section === 'not_validated_properties' && (
+        <div className="w-full">
+          {/* Add these state variables near your other useState declarations */}
+          {/*
+          const [propertySearch, setPropertySearch] = useState('');
+          const [cityFilter, setCityFilter] = useState('');
+          */}
 
-                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                  <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
-                    <div className="lg:col-span-2">
-                      <input 
-                        type="text" 
-                        placeholder="Search by property name or owner..." 
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                      />
-                    </div>
-                    <select className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
-                      <option>All Cities</option>
-                      <option>Casablanca</option>
-                      <option>Rabat</option>
-                      <option>Marrakech</option>
-                    </select>
-                    <select className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
-                      <option>All Types</option>
-                      <option>Apartment</option>
-                      <option>Villa</option>
-                      <option>Studio</option>
-                    </select>
-                    <select className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
-                      <option>Sort: Newest</option>
-                      <option>Sort: Oldest</option>
-                      <option>Sort: Price</option>
-                      <option>Sort: Owner</option>
-                    </select>
-                    <button className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium">
-                      <i className="fa-solid fa-rotate-right mr-2"></i>
-                      Reset
-                    </button>
-                  </div>
+          <header className="bg-white border-b border-gray-200">
+            <div className="px-8 py-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Pending Properties</h1>
+                  <p className="text-gray-600 mt-1">Review and validate property submissions</p>
                 </div>
               </div>
-            </header>
+              
+              {/* Analytics with filtered counts */}
+              {(() => {
+                const filteredProperties = pendingProperties.filter(property => {
+                  const matchesSearch = propertySearch === '' || 
+                    property.title?.toLowerCase().includes(propertySearch.toLowerCase()) ||
+                    property.owner?.name?.toLowerCase().includes(propertySearch.toLowerCase());
+                  
+                  const matchesCity = cityFilter === '' || property.ville?.name === cityFilter;
+                  
+                  return matchesSearch && matchesCity;
+                });
 
-            <div className="p-8">
-              <div className="space-y-8">
-                {pendingProperties.length === 0 ? (
-                  <div className="text-center py-16">
-                    <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-3xl flex items-center justify-center">
-                      <i className="fa-solid fa-house-circle-exclamation text-3xl text-gray-400"></i>
+                return (
+                  <>
+                    <div className="flex space-x-6 mb-6">
+                      <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-center space-x-3">
+                        <i className="fa-solid fa-clock text-orange-600"></i>
+                        <div>
+                          <div className="text-sm text-orange-600 font-medium">Pending</div>
+                          <div className="text-xl font-bold text-orange-700">{filteredProperties.length}</div>
+                          <div className="text-xs text-orange-500">of {pendingProperties.length} total</div>
+                        </div>
+                      </div>
+                      <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center space-x-3">
+                        <i className="fa-solid fa-check text-green-600"></i>
+                        <div>
+                          <div className="text-sm text-green-600 font-medium">Approved</div>
+                          <div className="text-xl font-bold text-green-700">142</div>
+                        </div>
+                      </div>
+                      <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center space-x-3">
+                        <i className="fa-solid fa-times text-red-600"></i>
+                        <div>
+                          <div className="text-sm text-red-600 font-medium">Rejected</div>
+                          <div className="text-xl font-bold text-red-700">23</div>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No Properties Found</h3>
-                    <p className="text-gray-500">All properties have been validated or no submissions are pending.</p>
+
+                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+                        <div className="lg:col-span-2">
+                          <input 
+                            type="text" 
+                            placeholder="Search by property name or owner..." 
+                            value={propertySearch}
+                            onChange={(e) => setPropertySearch(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                          />
+                        </div>
+                        
+                        {/* City Filter */}
+                        <select 
+                          value={cityFilter}
+                          onChange={(e) => setCityFilter(e.target.value)}
+                          className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                        >
+                          <option value="">All Cities</option>
+                          {/* Get unique cities from pending properties */}
+                          {[...new Set(pendingProperties.map(p => p.ville?.name).filter(Boolean))].map(city => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
+                        </select>
+                        
+                        <select className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                          <option>All Types</option>
+                          <option>Apartment</option>
+                          <option>Villa</option>
+                          <option>Studio</option>
+                        </select>
+                        
+                        <select className="px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                          <option>Sort: Newest</option>
+                          <option>Sort: Oldest</option>
+                          <option>Sort: Price</option>
+                          <option>Sort: Owner</option>
+                        </select>
+                        
+                        <button 
+                          onClick={() => {
+                            setPropertySearch('');
+                            setCityFilter('');
+                          }}
+                          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+                        >
+                          <i className="fa-solid fa-rotate-right mr-2"></i>
+                          Reset
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </header>
+
+          <div className="p-8">
+            {(() => {
+              const filteredProperties = pendingProperties.filter(property => {
+                const matchesSearch = propertySearch === '' || 
+                  property.title?.toLowerCase().includes(propertySearch.toLowerCase()) ||
+                  property.owner?.name?.toLowerCase().includes(propertySearch.toLowerCase());
+                
+                const matchesCity = cityFilter === '' || property.ville?.name === cityFilter;
+                
+                return matchesSearch && matchesCity;
+              });
+
+              return filteredProperties.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-3xl flex items-center justify-center">
+                    <i className="fa-solid fa-house-circle-exclamation text-3xl text-gray-400"></i>
                   </div>
-                ) : (
-                  pendingProperties.map((property, index) => (
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                    {pendingProperties.length === 0 
+                      ? "No Properties Found" 
+                      : "No Properties Match Your Filters"
+                    }
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    {pendingProperties.length === 0 
+                      ? "All properties have been validated or no submissions are pending."
+                      : "Try adjusting your search criteria or clearing the filters."
+                    }
+                  </p>
+                  {(propertySearch || cityFilter) && (
+                    <button 
+                      onClick={() => {
+                        setPropertySearch('');
+                        setCityFilter('');
+                      }}
+                      className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {filteredProperties.map((property, index) => (
                     <div 
                       key={property.id} 
                       className="bg-white rounded-3xl shadow-soft border border-gray-200 overflow-hidden hover:shadow-card-hover transition-all duration-300"
@@ -599,7 +680,7 @@ const handleBalanceChange = (amount) => {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">{property.title}</h3>
                             <p className="text-gray-600 mb-4">
-                              {property.ville_id} • {property.rooms} chambres • {property.surface} m² • {property.sale_price || property.rent_price} DH{property.rent_price && '/mois'}
+                              {property.ville?.name} • {property.rooms} chambres • {property.surface} m² • {property.sale_price || property.rent_price} DH{property.rent_price && '/mois'}
                             </p>
                           </div>
                           <div className="w-32 h-24 rounded-2xl overflow-hidden ml-6">
@@ -620,14 +701,14 @@ const handleBalanceChange = (amount) => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                              {property.user?.name?.charAt(0) || 'U'}
+                              {property.owner?.name?.charAt(0) || 'U'}
                             </div>
                             <div>
                               <div className="text-sm font-semibold text-gray-900">
-                                {property.user?.name || 'Unknown User'}
+                                {property.owner?.name || 'Unknown User'}
                               </div>
                               <div className="text-xs text-gray-600">
-                                {property.user?.email || 'No email'}
+                                {property.owner?.email || 'No email'}
                               </div>
                             </div>
                             <button className="text-primary hover:text-primary/80 text-sm font-medium">
@@ -658,12 +739,13 @@ const handleBalanceChange = (amount) => {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
-        )}
+        </div>
+      )}
 
         {/* All Properties */}
         {section === 'all_properties' && (
@@ -826,336 +908,393 @@ const handleBalanceChange = (amount) => {
           </div>
         )}
 
-        {/* Users Section */}
-        {section === "users" && (
-          <div className="w-full">
-            {/* Header Section */}
-            <header className="bg-white border-b border-gray-200 px-8 py-6">
-              <div className="flex items-center justify-between mb-6">
+{/* Users Section */}
+{section === "users" && (
+  <div className="w-full">
+    {/* Header Section */}
+    <header className="bg-white border-b border-gray-200 px-8 py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
+          <p className="text-gray-600 mt-1">Manage platform users and their roles</p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            <i className="fa-solid fa-user-plus mr-2"></i>
+            Add User
+          </button>
+          <button className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors">
+            <i className="fa-solid fa-download mr-2"></i>
+            Export
+          </button>
+        </div>
+      </div>
+
+      {/* Search and Filters Bar */}
+      <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-2xl">
+        <div className="flex-1 min-w-[300px]">
+          <div className="relative">
+            <i className="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input 
+              type="text" 
+              placeholder="Search by name or email..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white" 
+            />
+          </div>
+        </div>
+        
+        <select 
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white min-w-[120px]"
+        >
+          <option value="">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="owner">Owner</option>
+          <option value="user">User</option>
+        </select>
+        
+        <button 
+          onClick={() => {
+            setSearchTerm('');
+            setRoleFilter('');
+          }}
+          className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+        >
+          <i className="fa-solid fa-rotate-right mr-2"></i>
+          Reset
+        </button>
+      </div>
+    </header>
+
+    {/* Analytics Summary Strip */}
+    <div className="px-8 py-4">
+      {/* Calculate filtered users for analytics */}
+      {(() => {
+        const filteredUsers = users.filter(user => {
+          const matchesSearch = searchTerm === '' || 
+            (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+          
+          const matchesRole = roleFilter === '' || user.role === roleFilter;
+          
+          return matchesSearch && matchesRole;
+        });
+
+        return (
+          <div className="grid grid-cols-4 gap-6">
+            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
-                  <p className="text-gray-600 mt-1">Manage platform users and their roles</p>
+                  <p className="text-sm font-medium text-gray-600">Total Users</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{filteredUsers.length}</p>
+                  <p className="text-xs text-gray-500 mt-1">of {users.length} total</p>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    <i className="fa-solid fa-user-plus mr-2"></i>
-                    Add User
-                  </button>
-                  <button className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors">
-                    <i className="fa-solid fa-download mr-2"></i>
-                    Export
-                  </button>
-                </div>
-              </div>
-
-              {/* Search and Filters Bar */}
-              <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-2xl">
-                <div className="flex-1 min-w-[300px]">
-                  <div className="relative">
-                    <i className="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" placeholder="Search by name or email..." className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white" />
-                  </div>
-                </div>
-                
-                <select className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white min-w-[120px]">
-                  <option value="">All Roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="owner">Owner</option>
-                  <option value="user">User</option>
-                </select>
-                
-                <select className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white min-w-[120px]">
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="disabled">Disabled</option>
-                </select>
-                
-                <select className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white min-w-[140px]">
-                  <option value="date">Sort by Join Date</option>
-                  <option value="name">Sort by Name</option>
-                  <option value="balance">Sort by Balance</option>
-                </select>
-              </div>
-            </header>
-
-            {/* Analytics Summary Strip */}
-            <div className="px-8 py-4">
-              <div className="grid grid-cols-4 gap-6">
-                <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Users</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-1">{users.length}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <i className="fa-solid fa-users text-primary"></i>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Active Users</p>
-                      <p className="text-2xl font-bold text-accent mt-1">{users.filter(u => u.isActive).length}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
-                      <i className="fa-solid fa-user-check text-accent"></i>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Pending Users</p>
-                      <p className="text-2xl font-bold text-orange-500 mt-1">0</p>
-                    </div>
-                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                      <i className="fa-solid fa-user-clock text-orange-500"></i>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Admins</p>
-                      <p className="text-2xl font-bold text-red-500 mt-1">{users.filter(u => u.role === 'admin').length}</p>
-                    </div>
-                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                      <i className="fa-solid fa-user-shield text-red-500"></i>
-                    </div>
-                  </div>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <i className="fa-solid fa-users text-primary"></i>
                 </div>
               </div>
             </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Active Users</p>
+                  <p className="text-2xl font-bold text-accent mt-1">{filteredUsers.filter(u => u.isActive).length}</p>
+                </div>
+                <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
+                  <i className="fa-solid fa-user-check text-accent"></i>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Owners</p>
+                  <p className="text-2xl font-bold text-orange-500 mt-1">{filteredUsers.filter(u => u.role === 'owner').length}</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                  <i className="fa-solid fa-user-tie text-orange-500"></i>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Admins</p>
+                  <p className="text-2xl font-bold text-red-500 mt-1">{filteredUsers.filter(u => u.role === 'admin').length}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <i className="fa-solid fa-user-shield text-red-500"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
 
-                  {/* Users Grid */}
-                    <div className="px-8 pb-8">
-                      {users.length === 0 ? (
-                        <div className="text-center py-20">
-                          <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-blue-50 to-white rounded-full flex items-center justify-center shadow-lg border border-blue-100">
-                            <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                            </svg>
-                          </div>
-                          <h3 className="text-2xl font-semibold text-blue-800 mb-3">No Users Found</h3>
-                          <p className="text-gray-500 max-w-md mx-auto">
-                            There are no users in the system yet. Users will appear here once they register.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                          {users.map((user, index) => {
-                            const roleColors = {
-                              admin: {
-                                badge: 'bg-red-100 text-red-700',
-                                avatar: 'bg-red-500',
-                                button: 'bg-primary'
-                              },
-                              owner: {
-                                badge: 'bg-green-100 text-green-700',
-                                avatar: 'bg-accent',
-                                button: 'bg-accent'
-                              },
-                              user: {
-                                badge: 'bg-blue-100 text-blue-700',
-                                avatar: 'bg-primary',
-                                button: 'bg-primary'
-                              }
-                            };
+    {/* Users Grid */}
+    <div className="px-8 pb-8">
+      {(() => {
+        const filteredUsers = users.filter(user => {
+          const matchesSearch = searchTerm === '' || 
+            (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+          
+          const matchesRole = roleFilter === '' || user.role === roleFilter;
+          
+          return matchesSearch && matchesRole;
+        });
 
-                            const colors = roleColors[user.role] || roleColors.user;
+        return filteredUsers.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-blue-50 to-white rounded-full flex items-center justify-center shadow-lg border border-blue-100">
+              <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-semibold text-blue-800 mb-3">No Users Found</h3>
+            <p className="text-gray-500 max-w-md mx-auto">
+              {users.length === 0 
+                ? "There are no users in the system yet. Users will appear here once they register."
+                : "No users match your current filters. Try adjusting your search criteria."
+              }
+            </p>
+            {(searchTerm || roleFilter) && (
+              <button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setRoleFilter('');
+                }}
+                className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredUsers.map((user, index) => {
+              const roleColors = {
+                admin: {
+                  badge: 'bg-red-100 text-red-700',
+                  avatar: 'bg-red-500',
+                  button: 'bg-primary'
+                },
+                owner: {
+                  badge: 'bg-green-100 text-green-700',
+                  avatar: 'bg-accent',
+                  button: 'bg-accent'
+                },
+                user: {
+                  badge: 'bg-blue-100 text-blue-700',
+                  avatar: 'bg-primary',
+                  button: 'bg-primary'
+                }
+              };
 
-                            return (
-                              <div key={user.id} className="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 hover:shadow-card-hover transition-all duration-300 relative">
-                                <div className="absolute top-4 right-4">
-                                  <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
-                                    <i className="fa-solid fa-ellipsis-vertical"></i>
-                                  </button>
-                                </div>
-                                
-                                <div className="flex items-center justify-between mb-4">
-                                  <div className={`w-14 h-14 ${colors.avatar} rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-soft`}>
-                                    {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                  </div>
-                                  <span className={`px-3 py-1.5 ${colors.badge} rounded-full text-sm font-medium`}>
-                                    {user.role}
-                                  </span>
-                                </div>
-                                
-                                <div className="mb-5">
-                                  <h3 className="text-lg font-bold text-gray-900 mb-1">{user.name}</h3>
-                                  <p className="text-gray-600 text-sm mb-2">{user.email}</p>
-                                  <p className="text-gray-500 text-xs">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
-                                </div>
-                                
-                                <div className="grid grid-cols-3 gap-3 mb-5 text-center">
-                                  <div className="bg-gray-50 rounded-xl p-3">
-                                    <div className="text-base font-bold text-gray-900">12</div>
-                                    <div className="text-xs text-gray-600">Projects</div>
-                                  </div>
-                                  <div className="bg-gray-50 rounded-xl p-3">
-                                    <div className="text-base font-bold text-gray-900">47</div>
-                                    <div className="text-xs text-gray-600">Tasks</div>
-                                  </div>
-                                  <div className="bg-gray-50 rounded-xl p-3">
-                                    <div className="text-base font-bold text-gray-900">{user.balance || 0}</div>
-                                    <div className="text-xs text-gray-600">Balance</div>
-                                  </div>
-                                </div>
-                                
-                                <button 
-                                  onClick={() => handleViewProfile(user)} 
-                                  className={`w-full py-3 ${colors.button} text-white rounded-2xl hover:${colors.button}/90 hover:shadow-card-hover transition-all duration-300 font-medium`}
-                                >
-                                  View Profile
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+              const colors = roleColors[user.role] || roleColors.user;
+
+              // Fix avatar generation
+              const getAvatarInitials = (userName) => {
+                if (!userName) return 'U';
+                const names = userName.trim().split(' ');
+                if (names.length === 1) {
+                  return names[0].charAt(0).toUpperCase();
+                }
+                return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+              };
+
+              const avatarInitials = getAvatarInitials(user.name);
+
+              return (
+                <div key={user.id} className="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 hover:shadow-card-hover transition-all duration-300 relative">
+                  <div className="absolute top-4 right-4">
+                    <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
+                      <i className="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-14 h-14 ${colors.avatar} rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-soft`}>
+                      {avatarInitials}
                     </div>
-
-                    {/* VIEW PROFILE MODAL */} 
-                    {showProfileModal && selectedUser && (
-                      <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-soft max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
-                          <div className="p-8">
-                            <div className="text-center mb-8">
-                              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i className="fa-solid fa-user-edit text-primary text-2xl"></i>
-                              </div>
-                              <h2 className="text-2xl font-bold text-gray-900 mb-2">Edit User Profile</h2>
-                              <p className="text-gray-600">Update user information and settings</p>
-                            </div>
-
-                            <div className="space-y-6">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                                <input
-                                  type="text"
-                                  name="name"
-                                  value={editUserData.name ?? ""}
-                                  onChange={handleInputChange}
-                                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50"
-                                  placeholder="Enter full name"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                                <input
-                                  type="email"
-                                  name="email"
-                                  value={editUserData.email ?? ""}
-                                  onChange={handleInputChange}
-                                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50"
-                                  placeholder="Enter email address"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                                <input
-                                  type="tel"
-                                  name="phone"
-                                  value={editUserData.phone ?? ""}
-                                  onChange={handleInputChange}
-                                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50"
-                                  placeholder="Enter phone number"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                                <select
-                                  name="role"
-                                  value={editUserData.role ?? ""}
-                                  onChange={handleInputChange}
-                                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50"
-                                >
-                                  <option value="user">User</option>
-                                  <option value="owner">Owner</option>
-                                  <option value="admin">Admin</option>
-                                </select>
-                              </div>
-
-{/* Balance Section */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">Balance (Points)</label>
-  
-  {/* Balance Display and Quick Actions */}
-  <div className="flex items-center gap-3 mb-3">
-    <div className="flex-1 relative">
-      <input
-        type="number"
-        name="balance"
-        value={editUserData.balance ?? 0}
-        onChange={handleInputChange}
-        className="w-full px-4 py-3 pl-12 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50"
-      />
-      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-        <i className="fa-solid fa-coins"></i>
-      </div>
+                    <span className={`px-3 py-1.5 ${colors.badge} rounded-full text-sm font-medium`}>
+                      {user.role}
+                    </span>
+                  </div>
+                  
+                  <div className="mb-5">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{user.name || 'Unknown User'}</h3>
+                    <p className="text-gray-600 text-sm mb-2">{user.email || 'No email'}</p>
+                    <p className="text-gray-500 text-xs">Joined: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown date'}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3 mb-5 text-center">
+                    <div className="bg-gray-50 rounded-xl p-3">
+                      <div className="text-base font-bold text-gray-900">12</div>
+                      <div className="text-xs text-gray-600">Projects</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3">
+                      <div className="text-base font-bold text-gray-900">47</div>
+                      <div className="text-xs text-gray-600">Tasks</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3">
+                      <div className="text-base font-bold text-gray-900">{user.balance || 0}</div>
+                      <div className="text-xs text-gray-600">Balance</div>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => handleViewProfile(user)} 
+                    className={`w-full py-3 ${colors.button} text-white rounded-2xl hover:opacity-90 hover:shadow-card-hover transition-all duration-300 font-medium`}
+                  >
+                    View Profile
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
-    
-    {/* Quick Action Buttons */}
-    <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={() => handleBalanceChange(100)}
-        className="px-3 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors text-sm font-medium"
-      >
-        +100
-      </button>
-      <button
-        type="button"
-        onClick={() => handleBalanceChange(-100)}
-        className="px-3 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors text-sm font-medium"
-      >
-        -100
-      </button>
-    </div>
-  </div>
 
-  {/* Points Summary */}
-  {(added_points > 0 || deducted_points > 0) && (
-    <div className="mt-2 p-2 bg-gray-50 rounded-lg text-sm">
-      {added_points > 0 && (
-        <p className="text-green-600">Points to be added: +{added_points}</p>
-      )}
-      {deducted_points > 0 && (
-        <p className="text-red-600">Points to be deducted: -{deducted_points}</p>
-      )}
-    </div>
-  )}
-</div>
+    {/* VIEW PROFILE MODAL */} 
+    {showProfileModal && selectedUser && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-soft max-w-md w-full mx-4 transform transition-all duration-300 scale-100 max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i className="fa-solid fa-user-edit text-primary text-xl"></i>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Edit User</h2>
+              <p className="text-gray-500 text-sm">Update user information</p>
+            </div>
 
-                              <div className="flex space-x-3 pt-6">
-                                <button
-                                  onClick={handleCloseModal}
-                                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-2xl hover:bg-gray-50 transition-colors font-medium"
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  onClick={handleSaveUser}
-                                  className="flex-1 px-6 py-3 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-colors font-medium shadow-soft"
-                                >
-                                  Save Changes
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={editUserData.name ?? ""}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                  placeholder="Enter full name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={editUserData.email ?? ""}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                  placeholder="Enter email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={editUserData.phone ?? ""}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                  placeholder="Enter phone"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  name="role"
+                  value={editUserData.role ?? ""}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                >
+                  <option value="user">User</option>
+                  <option value="owner">Owner</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Balance</label>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex-1 relative">
+                    <input
+                      type="number"
+                      name="balance"
+                      value={editUserData.balance ?? 0}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 pl-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                    />
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                      <i className="fa-solid fa-coins text-sm"></i>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleBalanceChange(100)}
+                      className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium"
+                    >
+                      +100
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBalanceChange(-100)}
+                      className="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-medium"
+                    >
+                      -100
+                    </button>
+                  </div>
+                </div>
+
+                {(added_points > 0 || deducted_points > 0) && (
+                  <div className="mt-1 p-2 bg-gray-50 rounded-lg text-xs">
+                    {added_points > 0 && (
+                      <p className="text-green-600">+{added_points} points to add</p>
+                    )}
+                    {deducted_points > 0 && (
+                      <p className="text-red-600">-{deducted_points} points to deduct</p>
                     )}
                   </div>
                 )}
+              </div>
+
+              <div className="flex space-x-2 pt-4">
+                <button
+                  onClick={handleCloseModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveUser}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium text-sm shadow-soft"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
         {/* Dashboard Section */}
         {section === "dashboard" && (

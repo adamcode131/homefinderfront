@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function UserPanel() {
@@ -13,6 +13,8 @@ export default function UserPanel() {
     preferredType: '',
     emailAlerts: false
   });
+  const fileInputRef = useRef(null);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -67,23 +69,54 @@ export default function UserPanel() {
 
   const handleProfileSubmit = (e) => {
     e.preventDefault();
-  
+
+    const formData = new FormData();
+    formData.append('name', profile.name || '');
+    formData.append('email', profile.email || '');
+    formData.append('phone', profile.phone || '');
+    // Append other fields if needed
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
     fetch('http://localhost:8000/api/update_user', {
-      method: 'PUT', 
+      method: 'POST', // use POST with method override or the backend may accept PUT; we'll include _method
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json' 
+        'Accept': 'application/json'
+        // DO NOT set Content-Type; browser will set multipart/form-data boundary
       },
-      body: JSON.stringify(profile)
+      body: (() => {
+        // Some backends expect a _method override for PUT when using form-data
+        if (!formData.has('_method')) formData.append('_method', 'PUT');
+        return formData;
+      })()
     })
-    .then(res => res.json())
-    .then(data => {
-      console.log('Success:', data);
+    .then(async res => {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) console.error('Update failed', data);
+      else console.log('Success:', data);
+      // If backend returns new user image path, update preview
+      if (data.user) {
+        const imagePath = data.user.image ?? data.user.photo ?? null;
+        if (imagePath) {
+          setUserData(prev => ({ ...prev, photo: `http://localhost:8000/storage/${imagePath}` }));
+        }
+      }
     })
     .catch(err => {
       console.error('Error:', err);
     });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // show preview
+      const previewUrl = URL.createObjectURL(file);
+      setUserData(prev => ({ ...prev, photo: previewUrl }));
+    }
   };
 
   const handleLogout = () => {
@@ -93,8 +126,8 @@ export default function UserPanel() {
   };  
 
   const [userData, setUserData] = useState({
-  name: 'Sarah Bennani',
-  photo: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
+  name: 'Chargement en cours',
+  photo: 'user.png',
   role: 'Client'
 });
 const [loading, setLoading] = useState(true);
@@ -115,9 +148,13 @@ useEffect(() => {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.user) {
+          // Build a fully-qualified URL for the image stored by Laravel (storage/app/public/... -> /storage/...)
+          const imagePath = data.user.image ?? data.user.photo ?? null;
+          const photoUrl = imagePath ? `http://localhost:8000/storage/${imagePath}` : 'user.png';
+
           setUserData({
             name: data.user.name || 'Sarah Bennani',
-            photo: data.user.photo || 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
+            photo: photoUrl,
             role: data.user.role || 'Client'
           });
         }
@@ -315,10 +352,18 @@ useEffect(() => {
               <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
                 <div className="flex items-center space-x-6">
                   <div className="relative">
-                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Profile" className="w-24 h-24 rounded-full object-cover" />
-                    <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+                    <img src={userData.photo || "user.png"} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+                    <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
                       <i className="fa-solid fa-camera text-sm"></i>
                     </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      name="image"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
                   </div>
                   <div className="flex-1">
                     <h2 className="text-2xl font-bold text-slate-800">{profile.name || 'Sarah Bennani'}</h2>

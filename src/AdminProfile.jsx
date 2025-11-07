@@ -42,6 +42,7 @@ export default function AdminProfile(){
   const handleSave = () => {
     const formData = new FormData();
     formData.append('name', user.name);
+    formData.append('email', user.email);
     formData.append('phone', user.phone);
     if (image) formData.append('image', image);
 
@@ -110,6 +111,19 @@ export default function AdminProfile(){
               />
             ) : (
               <div className="w-full px-4 py-3 border rounded-xl bg-gray-50">{user.name}</div>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            {isEditing ? (
+              <input
+                type="email"
+                value={user.email || ''}
+                onChange={e => handleInputChange('email', e.target.value)}
+                className="w-full px-4 py-3 border rounded-xl bg-gray-50"
+              />
+            ) : (
+              <div className="w-full px-4 py-3 border rounded-xl bg-gray-50">{user.email}</div>
             )}
           </div>
 
