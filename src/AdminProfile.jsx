@@ -53,7 +53,6 @@ export default function AdminProfile(){
       }
     })
     .then(res => {
-      console.log('Saved:', res.data);
       setIsEditing(false);
       // optionally update user with response
       setUser(res.data.user);

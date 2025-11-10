@@ -16,6 +16,7 @@ export default function AdminPanel() {
   const [roleFilter, setRoleFilter] = useState(''); 
   const navigate  = useNavigate();
   const [refunds,setRefunds] = useState([]); 
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [propertySearch, setPropertySearch] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   // VIEW PROFILE
@@ -431,7 +432,7 @@ const handleBalanceChange = (amount) => {
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Sidebar */}
-    <aside className="w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
+  <aside className="hidden md:block w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-center mb-2">
           <img 
@@ -503,8 +504,93 @@ const handleBalanceChange = (amount) => {
       </div>
     </aside>
 
-      {/* Main Content - Fixed to account for sidebar */}
-      <main className="flex-1 ml-64 p-8">
+    {/* Mobile drawer (only visible on small screens) */}
+    {drawerOpen && (
+      <div className="fixed inset-0 z-50 md:hidden flex">
+        <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} />
+        <aside className="relative w-64 bg-white shadow-lg border-r border-gray-200 h-full z-50 p-6 overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <img src="./logo.svg" alt="Company Logo" className="w-12 h-12 object-contain" />
+              <div className="ml-3">
+                <p className="text-sm text-gray-600 font-medium">Admin Dashboard</p>
+              </div>
+            </div>
+            <button onClick={() => setDrawerOpen(false)} className="p-2 rounded-md">
+              <i className="fa-solid fa-xmark text-2xl"></i>
+            </button>
+          </div>
+
+          <nav className="space-y-2">
+            <button
+              onClick={() => { setSection('dashboard'); setDrawerOpen(false); }}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
+                section === 'dashboard'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-chart-line mr-3 w-5"></i>
+              Dashboard
+            </button>
+            <button
+              onClick={() => { setSection('users'); setDrawerOpen(false); }}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
+                section === 'users'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-users mr-3 w-5"></i>
+              Users
+            </button>
+            <button
+              onClick={() => { setSection('not_validated_properties'); setDrawerOpen(false); }}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
+                section === 'not_validated_properties'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-clock mr-3 w-5"></i>
+              Pending Properties
+            </button>
+            <button
+              onClick={() => { setSection('all_properties'); setDrawerOpen(false); }}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
+                section === 'all_properties'
+                  ? 'text-primary bg-blue-50 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <i className="fa-solid fa-building mr-3 w-5"></i>
+              All Properties
+            </button>
+          </nav>
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+            <div className="flex items-center space-x-3">
+              <img onClick={()=>{navigate('/admin-profile'); setDrawerOpen(false);}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+                <div className="text-xs text-gray-600">{user.role}</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    )}
+
+      {/* Main Content - Fixed to account for sidebar (responsive: remove left margin on small screens) */}
+      <main className="flex-1 ml-0 md:ml-64 p-3 sm:p-4 md:p-6">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center justify-between bg-white border-b px-3 py-2 -mx-3 sm:-mx-4 md:-mx-6 mb-4">
+          <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-lg hover:bg-gray-50">
+            <i className="fa-solid fa-bars text-xl"></i>
+          </button>
+          <div className="text-base font-semibold">Admin Dashboard</div>
+          <div className="w-8" />
+        </div>
       {/* Pending Properties */}
       {section === 'not_validated_properties' && (
         <div className="w-full">
@@ -515,7 +601,7 @@ const handleBalanceChange = (amount) => {
           */}
 
           <header className="bg-white border-b border-gray-200">
-            <div className="px-8 py-6">
+            <div className="px-4 sm:px-8 py-4 sm:py-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Pending Properties</h1>
@@ -537,7 +623,7 @@ const handleBalanceChange = (amount) => {
 
                 return (
                   <>
-                    <div className="flex space-x-6 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:space-x-6 space-y-4 sm:space-y-0 mb-6">
                       <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-center space-x-3">
                         <i className="fa-solid fa-clock text-orange-600"></i>
                         <div>
@@ -562,7 +648,7 @@ const handleBalanceChange = (amount) => {
                       </div>
                     </div>
 
-                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                    <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-200">
                       <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
                         <div className="lg:col-span-2">
                           <input 
@@ -619,7 +705,7 @@ const handleBalanceChange = (amount) => {
             </div>
           </header>
 
-          <div className="p-8">
+          <div className="p-4 sm:p-8">
             {(() => {
               const filteredProperties = pendingProperties.filter(property => {
                 const matchesSearch = propertySearch === '' || 
@@ -665,16 +751,16 @@ const handleBalanceChange = (amount) => {
                   {filteredProperties.map((property, index) => (
                     <div 
                       key={property.id} 
-                      className="bg-white rounded-3xl shadow-soft border border-gray-200 overflow-hidden hover:shadow-card-hover transition-all duration-300"
+                      className="bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg border border-gray-200 overflow-hidden transition-all duration-300"
                     >
-                      <div className="p-8">
-                        <div className="flex items-start justify-between mb-6">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-4 mb-3">
-                              <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                      <div className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row items-start gap-4">
+                          <div className="flex-1 min-w-0 order-2 sm:order-1">
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              <span className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
                                 {property.type}
                               </span>
-                              <span className="text-sm text-gray-500">
+                              <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
                                 {new Date(property.created_at).toLocaleDateString()}
                               </span>
                             </div>
@@ -683,7 +769,7 @@ const handleBalanceChange = (amount) => {
                               {property.ville?.name} • {property.rooms} chambres • {property.surface} m² • {property.sale_price || property.rent_price} DH{property.rent_price && '/mois'}
                             </p>
                           </div>
-                          <div className="w-32 h-24 rounded-2xl overflow-hidden ml-6">
+                          <div className="w-32 h-24 rounded-2xl overflow-hidden ml-0 sm:ml-6 flex-shrink-0">
                             {property.images && property.images.length > 0 ? (
                               <img 
                                 className="w-full h-full object-cover" 
@@ -751,7 +837,7 @@ const handleBalanceChange = (amount) => {
         {section === 'all_properties' && (
           <div className="w-full max-w-6xl mx-auto">
             {/* Header Section */}
-            <div className="text-center mb-12">
+            <div className="text-center mb-8 px-4 sm:px-0">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent mb-4">
                 All Properties
               </h1>
@@ -761,7 +847,7 @@ const handleBalanceChange = (amount) => {
             </div>
 
             {/* Enhanced Search Bar */}
-            <div className="relative w-full max-w-2xl mx-auto mb-12">
+            <div className="relative w-full max-w-2xl mx-auto mb-8 px-4 sm:px-0">
               <div className="relative group">
                 <input
                   type="text"
@@ -912,18 +998,18 @@ const handleBalanceChange = (amount) => {
 {section === "users" && (
   <div className="w-full">
     {/* Header Section */}
-    <header className="bg-white border-b border-gray-200 px-8 py-6">
-      <div className="flex items-center justify-between mb-6">
+  <header className="bg-white border-b border-gray-200 px-3 sm:px-6 py-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
-          <p className="text-gray-600 mt-1">Manage platform users and their roles</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Users Management</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage platform users and their roles</p>
         </div>
-        <div className="flex items-center space-x-4">
-          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+        <div className="flex flex-wrap gap-2">
+          <button className="flex-1 sm:flex-none px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
             <i className="fa-solid fa-user-plus mr-2"></i>
             Add User
           </button>
-          <button className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors">
+          <button className="flex-1 sm:flex-none px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent/90 transition-colors whitespace-nowrap">
             <i className="fa-solid fa-download mr-2"></i>
             Export
           </button>
@@ -931,16 +1017,16 @@ const handleBalanceChange = (amount) => {
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-2xl">
-        <div className="flex-1 min-w-[300px]">
+      <div className="flex flex-col sm:flex-row gap-3 bg-gray-50 p-3 sm:p-4 rounded-xl">
+        <div className="flex-1 min-w-0">
           <div className="relative">
-            <i className="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <i className="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             <input 
               type="text" 
               placeholder="Search by name or email..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white" 
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white" 
             />
           </div>
         </div>
@@ -970,7 +1056,7 @@ const handleBalanceChange = (amount) => {
     </header>
 
     {/* Analytics Summary Strip */}
-    <div className="px-8 py-4">
+  <div className="px-4 sm:px-8 py-4">
       {/* Calculate filtered users for analytics */}
       {(() => {
         const filteredUsers = users.filter(user => {
@@ -984,8 +1070,8 @@ const handleBalanceChange = (amount) => {
         });
 
         return (
-          <div className="grid grid-cols-4 gap-6">
-            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Users</p>
@@ -998,7 +1084,7 @@ const handleBalanceChange = (amount) => {
               </div>
             </div>
             
-            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Users</p>
@@ -1010,7 +1096,7 @@ const handleBalanceChange = (amount) => {
               </div>
             </div>
             
-            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Owners</p>
@@ -1022,7 +1108,7 @@ const handleBalanceChange = (amount) => {
               </div>
             </div>
             
-            <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Admins</p>
@@ -1038,17 +1124,15 @@ const handleBalanceChange = (amount) => {
       })()}
     </div>
 
-    {/* Users Grid */}
-    <div className="px-8 pb-8">
+      {/* Users Grid */}
+  <div className="px-3 sm:px-6 pb-6">
       {(() => {
         const filteredUsers = users.filter(user => {
           const matchesSearch = searchTerm === '' || 
             (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
           
-          const matchesRole = roleFilter === '' || user.role === roleFilter;
-          
-          return matchesSearch && matchesRole;
+          const matchesRole = roleFilter === '' || user.role === roleFilter;          return matchesSearch && matchesRole;
         });
 
         return filteredUsers.length === 0 ? (

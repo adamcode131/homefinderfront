@@ -213,19 +213,19 @@ function Boutique() {
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
-        <header className="bg-white border-b border-gray-200 px-8 py-6 mb-8 rounded-3xl shadow-soft">
-          <div className="flex items-center justify-between">
+        <header className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-6 mb-4 sm:mb-8 rounded-xl sm:rounded-3xl shadow-soft">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Ma Boutique</h1>
-              <p className="text-gray-600 mt-1">Gérez vos propriétés et suivez vos performances</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Ma Boutique</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Gérez vos propriétés et suivez vos performances</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center">
               <button 
                 onClick={handleAddProperty}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                className="w-full sm:w-auto px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm sm:text-base flex items-center justify-center"
               >
                 <i className="fa-solid fa-plus mr-2"></i>
-                Ajouter une propriété
+                <span className="whitespace-nowrap">Ajouter une propriété</span>
               </button>
             </div>
           </div>
@@ -233,27 +233,27 @@ function Boutique() {
 
         {/* Search and Filter Section */}
         <div id="search-filter-section" className="mb-8">
-          <div className="bg-white rounded-xl shadow-card p-6 border border-gray-100">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex-1 max-w-md">
+          <div className="bg-white rounded-xl shadow-card p-4 sm:p-6 border border-gray-100">
+            <div className="flex flex-col gap-4">
+              <div className="w-full">
                 <div className="relative">
                   <input 
                     type="text" 
                     placeholder="Rechercher par titre, ville ou quartier..." 
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
-                    className="w-full px-4 py-3 pl-12 pr-4 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                    className="w-full px-4 py-3 pl-12 pr-4 text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm sm:text-base"
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4">
                     <i className="fa-solid fa-search text-gray-400"></i>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
                 <select 
                   value={selectedIntention}
                   onChange={(e) => setSelectedIntention(e.target.value)}
-                  className="px-4 py-3 border border-gray-200 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  className="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-lg text-sm sm:text-base text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 >
                   <option value="">Toutes les intentions</option>
                   {uniqueIntentions.map(intention => (
@@ -266,7 +266,7 @@ function Boutique() {
                 <select 
                   value={selectedVille}
                   onChange={(e) => setSelectedVille(e.target.value)}
-                  className="px-4 py-3 border border-gray-200 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  className="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-lg text-sm sm:text-base text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 >
                   <option value="">Toutes les villes</option>
                   {uniqueVilles.map(ville => (
@@ -387,10 +387,10 @@ function Boutique() {
           </div>
         ) : filteredProperties.length > 0 ? (
           <>
-            <div id="properties-grid" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div id="properties-grid" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
               {currentProperties.map((property) => (
-                <div key={property.id} className="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-card-hover transition-all duration-300">
-                  <div className="h-48 relative overflow-hidden">
+                <div key={property.id} className="bg-white rounded-lg sm:rounded-xl shadow-card border border-gray-100 overflow-hidden hover:shadow-card-hover transition-all duration-300">
+                  <div className="h-32 sm:h-48 relative overflow-hidden">
                     {property.images && property.images.length > 0 ? (
                       <img 
                         className="w-full h-full object-cover" 
@@ -399,46 +399,46 @@ function Boutique() {
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                        <i className="fa-solid fa-home text-gray-400 text-4xl"></i>
+                        <i className="fa-solid fa-home text-gray-400 text-2xl sm:text-4xl"></i>
                       </div>
                     )}
-                    <div className="absolute top-3 left-3">
-                      <span className={`px-3 py-1 ${getIntentionColor(property.intention)} text-white text-sm font-medium rounded-full`}>
+                    <div className="absolute top-1.5 sm:top-3 left-1.5 sm:left-3">
+                      <span className={`px-1.5 sm:px-3 py-0.5 sm:py-1 ${getIntentionColor(property.intention)} text-white text-xs sm:text-sm font-medium rounded-full`}>
                         {getIntentionText(property.intention)}
                       </span>
                     </div>
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full">
-                      <i className="fa-solid fa-eye text-gray-600 text-sm"></i>
+                    <div className="absolute top-1.5 sm:top-3 right-1.5 sm:right-3 bg-white/90 backdrop-blur-sm p-1 sm:p-2 rounded-full">
+                      <i className="fa-solid fa-eye text-gray-600 text-xs sm:text-sm"></i>
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{property.title}</h3>
-                    <div className="flex items-center text-gray-600 text-sm mb-3">
-                      <i className="fa-solid fa-location-dot mr-2 text-primary"></i>
-                      <span>
+                  <div className="p-3 sm:p-6">
+                    <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2 line-clamp-1">{property.title}</h3>
+                    <div className="flex items-center text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
+                      <i className="fa-solid fa-location-dot mr-1.5 sm:mr-2 text-primary"></i>
+                      <span className="truncate">
                         {property.ville?.name || "Ville inconnue"}
                         {property.quartier?.name && ` • ${property.quartier.name}`}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="text-xl font-bold text-gray-900">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-3 sm:mb-4">
+                      <div className="text-base sm:text-xl font-bold text-gray-900">
                         {getPriceDisplay(property)}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-[10px] sm:text-sm text-gray-500">
                         Créé le {new Date(property.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center gap-1.5 sm:gap-3">
                       <button 
                         onClick={() => handleEdit(property.id)}
-                        className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
+                        className="flex-1 px-2 sm:px-4 py-1.5 sm:py-2 bg-primary text-white rounded-md sm:rounded-lg hover:bg-blue-600 transition-colors font-medium text-xs sm:text-sm"
                       >
-                        <i className="fa-solid fa-edit mr-2"></i>
+                        <i className="fa-solid fa-edit mr-1 sm:mr-2"></i>
                         Modifier
                       </button>
                       <button 
                         onClick={() => handleDelete(property.id)}
-                        className="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm"
+                        className="px-2 sm:px-4 py-1.5 sm:py-2 border border-red-200 text-red-600 rounded-md sm:rounded-lg hover:bg-red-50 transition-colors font-medium text-xs sm:text-sm"
                       >
                         <i className="fa-solid fa-trash"></i>
                       </button>
@@ -1474,7 +1474,8 @@ function Leads() {
 
 export default function OwnerPanel() {
   const [mainSection, setMainSection] = useState('properties');
-    const [userData, setUserData] = useState({
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [userData, setUserData] = useState({
     name: 'Chargement ...', // Default fallback
     photo: 'user.png', // Default fallback
     role: 'Owner'
@@ -1528,95 +1529,227 @@ export default function OwnerPanel() {
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
-        <div className="p-6 border-b border-gray-200">
-          <div className="text-xl font-bold text-primary flex items-center">
-            <i className="fa-solid fa-home mr-2"></i>
-            PropertyAI
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-white z-40 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3">
+          <button 
+            onClick={() => setDrawerOpen(!drawerOpen)}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+          >
+            <i className={`fa-solid ${drawerOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
+          </button>
+          <div className="text-lg font-medium text-gray-900">
+            {mainSection === 'properties' && 'Ma Boutique'}
+            {mainSection === 'balance' && 'Balance'}
+            {mainSection === 'leads' && 'Leads'}
+            {mainSection === 'contact' && 'Contact'}
           </div>
-          <p className="text-sm text-gray-600 mt-1">Tableau de bord propriétaire</p>
+          <div className="w-10"></div> {/* Spacer for alignment */}
         </div>
-        
-        <nav className="p-4">
-          <div className="space-y-2">
-            <button
-              onClick={() => setMainSection('properties')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                mainSection === 'properties'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
+      </div>
+
+      {/* Sidebar - Desktop */}
+      <aside className="hidden md:flex w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
+        <div className="flex flex-col w-full">
+          <div className="p-4 border-b border-gray-200">
+            <button 
+              onClick={() => setDrawerOpen(!drawerOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
             >
-              <i className="fa-solid fa-building mr-3 w-5"></i>
-              Mes Propriétés
-            </button>
-            <button
-              onClick={() => setMainSection('balance')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                mainSection === 'balance'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-wallet mr-3 w-5"></i>
-              Balance
-              <span className="ml-auto bg-accent text-white text-xs px-2 py-1 rounded-full">450 DH</span>
-            </button>
-            <button
-              onClick={() => setMainSection('leads')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                mainSection === 'leads'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-users mr-3 w-5"></i>
-              Leads
-              <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">12</span>
-            </button>
-            <button
-              onClick={() => setMainSection('contact')}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                mainSection === 'contact'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-envelope mr-3 w-5"></i>
-              Contact
+              <i className="fa-solid fa-bars text-xl"></i>
             </button>
           </div>
-        </nav>
+          
+          <nav className="flex-1 p-4">
+            <div className="space-y-2">
+              <button
+                onClick={() => setMainSection('properties')}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'properties'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-building mr-3 w-5"></i>
+                Mes Propriétés
+              </button>
+              <button
+                onClick={() => setMainSection('balance')}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'balance'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-wallet mr-3 w-5"></i>
+                Balance
+                <span className="ml-auto bg-accent text-white text-xs px-2 py-1 rounded-full">450 DH</span>
+              </button>
+              <button
+                onClick={() => setMainSection('leads')}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'leads'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-users mr-3 w-5"></i>
+                Leads
+                <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">12</span>
+              </button>
+              <button
+                onClick={() => setMainSection('contact')}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'contact'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-envelope mr-3 w-5"></i>
+                Contact
+              </button>
+            </div>
+          </nav>
 
-<div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-  <div className="flex items-center space-x-3">
-    <img 
-      src={userData.photo} 
-      alt="Profile" 
-      className="w-10 h-10 rounded-full object-cover cursor-pointer" 
-      onClick={() => navigate('/admin-profile')}
-    />
-    <div className="flex-1">
-      <div className="text-sm font-semibold text-gray-900">
-        {loading ? 'Chargement...' : userData.name}
-      </div>
-      <div className="text-xs text-gray-600">
-        {userData.role}
-      </div>
-    </div>
-    <button 
-      onClick={handleLogout}
-      className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
-    >
-      <i className="fa-solid fa-sign-out-alt"></i>
-    </button>
-  </div>
-</div>
+          <div className="p-4 border-t border-gray-200 bg-white">
+            <div className="flex items-center space-x-3">
+              <img 
+                src={userData.photo} 
+                alt="Profile" 
+                className="w-10 h-10 rounded-full object-cover cursor-pointer" 
+                onClick={() => navigate('/admin-profile')}
+              />
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-gray-900">
+                  {loading ? 'Chargement...' : userData.name}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {userData.role}
+                </div>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+              >
+                <i className="fa-solid fa-sign-out-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </aside>
 
-      {/* Main Content - Add ml-64 to account for sidebar width */}
-      <main className="flex-1 ml-64">
+      {/* Mobile Drawer */}
+      <div
+        className={`md:hidden fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300 ${
+          drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setDrawerOpen(false)}
+      ></div>
+      
+      <aside className={`md:hidden fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-40 transform transition-transform duration-300 ${
+        drawerOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="flex flex-col h-full">
+          <div className="p-6 border-b border-gray-200">
+            <div className="text-xl font-bold text-primary flex items-center">
+              <i className="fa-solid fa-home mr-2"></i>
+              PropertyAI
+            </div>
+            <p className="text-sm text-gray-600 mt-1">Tableau de bord propriétaire</p>
+          </div>
+          
+          <nav className="flex-1 p-4">
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  setMainSection('properties');
+                  setDrawerOpen(false);
+                }}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'properties'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-building mr-3 w-5"></i>
+                Mes Propriétés
+              </button>
+              <button
+                onClick={() => {
+                  setMainSection('balance');
+                  setDrawerOpen(false);
+                }}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'balance'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-wallet mr-3 w-5"></i>
+                Balance
+                <span className="ml-auto bg-accent text-white text-xs px-2 py-1 rounded-full">450 DH</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMainSection('leads');
+                  setDrawerOpen(false);
+                }}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'leads'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-users mr-3 w-5"></i>
+                Leads
+                <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">12</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMainSection('contact');
+                  setDrawerOpen(false);
+                }}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  mainSection === 'contact'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-envelope mr-3 w-5"></i>
+                Contact
+              </button>
+            </div>
+          </nav>
+
+          <div className="p-4 border-t border-gray-200 bg-white">
+            <div className="flex items-center space-x-3">
+              <img 
+                src={userData.photo} 
+                alt="Profile" 
+                className="w-10 h-10 rounded-full object-cover cursor-pointer" 
+                onClick={() => navigate('/admin-profile')}
+              />
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-gray-900">
+                  {loading ? 'Chargement...' : userData.name}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {userData.role}
+                </div>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+              >
+                <i className="fa-solid fa-sign-out-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 md:ml-64 pt-16 md:pt-0">
         {mainSection === 'properties' && <Boutique />}
         {mainSection === 'balance' && <Balance />}
         {mainSection === 'leads' && <Leads />} 

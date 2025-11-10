@@ -146,23 +146,23 @@ export default function Home() {
       {/* Header */}
       <header
         id="header"
-        className="w-full px-8 py-5 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-50"
+        className="w-full px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-50"
       >
         {/* Logo */}
         <div className="flex items-center group">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-            <LogoIcon className="w-6 h-6" />
+            <LogoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <span className="ml-3 text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+          <span className="ml-2 sm:ml-3 text-xl sm:text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
             Daryol
           </span>
         </div>
 
         {/* Right side navigation */}
-        <div className="flex items-center space-x-6">
-          {/* Language Selector */}
+        <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
+          {/* Language Selector (compact on mobile, original size on sm+) */}
           <div className="relative">
-            <select className="bg-white/90 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md">
+            <select className="bg-white/90 border border-slate-300 rounded-xl px-2 py-1 text-xs sm:px-4 sm:py-2.5 sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md">
               <option value="fr">🇫🇷 FR</option>
               <option value="en">🇺🇸 EN</option>
               <option value="ar">🇲🇦 AR</option>
@@ -170,26 +170,20 @@ export default function Home() {
           </div>
 
           {/* Owner Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {/* Auth Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 items-center">
               <Link to="/signup_owner">
-                <button className="bg-gradient-to-r from-blue-500 to-blue-600 
-                  hover:from-blue-600 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl 
-                  text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
-                  transform hover:-translate-y-0.5 border border-blue-400/20">
-                  <i className="fa-solid fa-building mr-2"></i>
-                  Annonceur
+                <button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-2 py-1.5 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-blue-400/20 whitespace-nowrap min-w-0 flex items-center justify-center">
+                  <i className="fa-solid fa-building mr-0 sm:mr-2 text-lg sm:text-base"></i>
+                  <span className="hidden sm:inline">Annonceur</span>
                 </button>
               </Link>
 
               <Link to="/signup_user">
-                <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 
-                  hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-2.5 rounded-xl 
-                  text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl
-                  transform hover:-translate-y-0.5 border border-emerald-400/20">
-                  <i className="fa-solid fa-user mr-2"></i>
-                  Client
+                <button className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-2 py-1.5 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-emerald-400/20 whitespace-nowrap min-w-0 flex items-center justify-center">
+                  <i className="fa-solid fa-user mr-0 sm:mr-2 text-lg sm:text-base"></i>
+                  <span className="hidden sm:inline">Client</span>
                 </button>
               </Link>
             </div>
@@ -198,39 +192,39 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main id="main-content" className="flex flex-col items-center justify-center px-8 py-24">
+  <main id="main-content" className="flex flex-col items-center justify-center px-4 sm:px-8 py-16 sm:py-24">
         {/* Hero Logo Section */}
-        <div className="mb-12 text-center">
+  <div className="mb-8 sm:mb-12 text-center">
           <div className="flex items-center justify-center mb-6">
-              <LogoIcon className="w-20 h-20" />
+              <LogoIcon className="w-16 h-16 sm:w-20 sm:h-20" />
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">Daryol</h1>
-          <p className="text-slate-500 text-lg font-light">Powered by Artificial Intelligence</p>
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">Daryol</h1>
+          <p className="text-slate-500 text-sm sm:text-lg font-light">Powered by Artificial Intelligence</p>
         </div>
 
         {/* Search Section */}
         <div id="search-section" className="w-full max-w-3xl">
           {/* Search Bar */}
           <div className="relative mb-4">
-            <div className="flex items-center bg-white border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 focus-within:border-blue-500 focus-within:search-glow group">
+            <div className="flex items-center bg-white border-2 border-slate-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 focus-within:border-blue-500 focus-within:search-glow group p-3 sm:p-6">
               <div className="pl-8 pr-4">
                 <i className="fa-solid fa-search text-slate-400 text-xl group-focus-within:text-blue-500 transition-colors duration-200"></i>
               </div>
-              <input 
-                onChange={(e) => setQuery(e.target.value)} 
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
-                value={query}
-                type="text" 
-                placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" 
-                className="flex-1 py-6 px-3 text-xl text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" 
-              />
-              <button 
-                onClick={() => handleSearch(query)} 
-                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-10 py-4 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
-              >
-                <i className="fa-solid fa-search mr-2"></i>Search
-              </button>
+                <input 
+                  onChange={(e) => setQuery(e.target.value)} 
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  value={query}
+                  type="text" 
+                  placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" 
+                  className="flex-1 py-3 px-3 sm:px-6 text-sm sm:text-base text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" 
+                />
+                <button 
+                  onClick={() => handleSearch(query)} 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium text-sm sm:text-base"
+                >
+                  <i className="fa-solid fa-search mr-2"></i>Search
+                </button>
             </div>
             
             {/* Enhanced Suggestions Dropdown */}
@@ -240,7 +234,7 @@ export default function Home() {
                   {suggestions.map((s, i) => (
                     <div
                       key={i}
-                      className="flex items-center px-6 py-4 hover:bg-blue-50 cursor-pointer transition-all duration-150 group border-b border-slate-100 last:border-b-0"
+                      className="flex items-center px-4 py-3 sm:px-6 sm:py-4 hover:bg-blue-50 cursor-pointer transition-all duration-150 group border-b border-slate-100 last:border-b-0"
                       onClick={() => handleSuggestionClick(s.name)}
                     >
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4 group-hover:bg-blue-200 transition-colors duration-150">
@@ -269,7 +263,7 @@ export default function Home() {
 
           {/* Autour de Moi Toggle */}
           <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-200">
+            <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl px-4 py-2 sm:px-6 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-200">
               <span className="text-slate-700 font-medium text-sm">Autour de moi</span>
               <button 
                 onClick={toggleAutourDeMoi}
@@ -291,22 +285,22 @@ export default function Home() {
           </div>
 
           {/* Tagline */}
-          <p className="text-center text-slate-600 text-xl mb-12 font-light">
+          <p className="text-center text-slate-600 text-base sm:text-xl mb-12 font-light">
             Find your home with <span className="font-medium text-blue-600">AI-powered search</span>
           </p>
           
           {/* Quick Suggestions */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
-            <button onClick={() => handleSearch("1 Chambre")} className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("1 Chambre")} className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-bed mr-2 text-blue-500"></i>1 Chambre
             </button>
-            <button onClick={() => handleSearch("Maarif")} className="suggestion-pulse bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-green-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("Maarif")} className="suggestion-pulse bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-green-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-location-dot mr-2 text-green-500"></i>Maarif
             </button>
-            <button onClick={() => handleSearch("moins de 5000dh")} className="suggestion-pulse bg-white hover:bg-yellow-50 text-slate-700 hover:text-yellow-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("moins de 5000dh")} className="suggestion-pulse bg-white hover:bg-yellow-50 text-slate-700 hover:text-yellow-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-coins mr-2 text-yellow-500"></i>Moins de 5000 DH
             </button>
-            <button onClick={() => handleSearch("plus de 200metre")} className="suggestion-pulse bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 px-6 py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg">
+            <button onClick={() => handleSearch("plus de 200metre")} className="suggestion-pulse bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg">
               <i className="fa-solid fa-car mr-2 text-purple-500"></i>Plus de 200 métre carré
             </button>
           </div>

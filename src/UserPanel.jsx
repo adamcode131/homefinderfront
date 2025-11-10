@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 export default function UserPanel() {
   const [section, setSection] = useState('mes-demandes');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const handleSetSection = (s) => { setSection(s); setDrawerOpen(false); };
   const [properties,setProperties] = useState();
   const navigate = useNavigate();
   const [profile, setProfile] = useState({
@@ -171,8 +173,22 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
-      {/* Fixed Sidebar */}
-      <aside className="w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-white z-40 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+            aria-label="Open menu"
+          >
+            <i className="fa-solid fa-bars text-xl"></i>
+          </button>
+          <div className="text-lg font-medium text-gray-900">{section === 'mes-demandes' ? 'Mes Demandes' : section === 'profil' ? 'Profil' : ''}</div>
+          <div className="w-8" />
+        </div>
+      </div>
+      {/* Fixed Sidebar (desktop only) */}
+      <aside className="hidden md:flex flex-col w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
         <div className="p-6 border-b border-gray-200">
           <div className="text-xl font-bold text-primary flex items-center">
             <i className="fa-solid fa-home mr-2"></i>
@@ -181,8 +197,8 @@ useEffect(() => {
           <p className="text-sm text-gray-600 mt-1">Espace Client</p>
         </div>
         
-        <nav className="p-4">
-          <div className="space-y-2">
+        <nav className="p-4 w-full">
+          <div className="space-y-2 w-full">
             <button
               onClick={() => setSection('mes-demandes')}
               className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
@@ -234,20 +250,89 @@ useEffect(() => {
         </div>
       </aside>
 
-      {/* Main Content - Fixed with proper margin and scrolling */}
-      <main className="flex-1 ml-64 min-w-0 p-8 overflow-auto">
+      {/* Mobile Drawer */}
+      <div className={`md:hidden fixed inset-0 z-30 ${drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        {/* Backdrop */}
+        <div
+          className={`absolute inset-0 bg-black transition-opacity duration-200 ${drawerOpen ? 'opacity-50' : 'opacity-0'}`}
+          onClick={() => setDrawerOpen(false)}
+        />
+
+        {/* Drawer panel */}
+        <aside className={`absolute left-0 top-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-200 ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="text-lg font-semibold">Menu</div>
+            <button onClick={() => setDrawerOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+              <i className="fa-solid fa-times text-lg"></i>
+            </button>
+          </div>
+          <nav className="p-4">
+            <div className="space-y-2">
+              <button
+                onClick={() => handleSetSection('mes-demandes')}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  section === 'mes-demandes'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-list-check mr-3 w-5"></i>
+                Mes Demandes
+              </button>
+              <button
+                onClick={() => handleSetSection('profil')}
+                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                  section === 'profil'
+                    ? 'text-primary bg-blue-50 font-medium'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <i className="fa-solid fa-user-gear mr-3 w-5"></i>
+                Profil
+              </button>
+            </div>
+          </nav>
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+            <div className="flex items-center space-x-3">
+              <img 
+                src={userData.photo} 
+                alt="Profile" 
+                className="w-10 h-10 rounded-full object-cover" 
+              />
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-gray-900">
+                  {loading ? 'Chargement...' : userData.name}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {userData.role}
+                </div>
+              </div>
+              <button 
+                onClick={() => { handleLogout(); setDrawerOpen(false); }}
+                className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+              >
+                <i className="fa-solid fa-sign-out-alt"></i>
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+  {/* Main Content - Fixed with proper margin and scrolling */}
+  <main className="flex-1 ml-0 md:ml-64 min-w-0 p-4 sm:p-8 pt-16 md:pt-8 overflow-auto">
         {section === 'mes-demandes' && (
           <div className="w-full max-w-full">
             {/* Header Card */}
 
 
             {/* Enhanced Table Card */}
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 overflow-hidden">
-              <div className="p-6">
-                {/* Smaller header */}
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-slate-800">Historique des Demandes</h2>
-                  <div className="flex items-center space-x-2">
+            <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60">
+              <div className="p-4 sm:p-6">
+                {/* Smaller header - stack on mobile */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+                  <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Historique des Demandes</h2>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <div className="bg-slate-100 rounded-lg px-3 py-1 text-xs text-slate-600 cursor-pointer hover:bg-slate-200 transition-colors">
                       <i className="fa-solid fa-filter mr-1 text-blue-500"></i>
                       Filtrer
@@ -259,22 +344,22 @@ useEffect(() => {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-slate-200/60">
-                  <table className="w-full">
+                <div className="overflow-x-auto rounded-xl border border-slate-200/60">
+                  <table className="w-full min-w-[700px]">
                     <thead>
                       <tr className="bg-gradient-to-r from-slate-50 to-slate-100/80 border-b border-slate-200/60">
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Propriété</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Type</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Prix</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Statut</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Actions</th>
+                        <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Propriété</th>
+                        <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Type</th>
+                        <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Prix</th>
+                        <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Statut</th>
+                        <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Date</th>
+                        <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/60">
                       {demandes.map((d) => (
                         <tr key={d.id} className="hover:bg-slate-50/80 transition-all duration-200 group">
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 sm:px-4 sm:py-3">
                             <div className="flex items-center">
                               <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center mr-2 group-hover:scale-110 transition-transform">
                                 <i className="fa-solid fa-home text-blue-600 text-xs"></i>
@@ -282,12 +367,12 @@ useEffect(() => {
                               <span className="font-medium text-slate-800 text-sm">{d.property.title}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 sm:px-4 sm:py-3">
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                               {d.property.type}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 sm:px-4 sm:py-3">
                             <div className="font-semibold text-slate-800 text-sm">
                               {d.property.sale_price ? d.property.sale_price : d.property.rent_price} DH
                               <span className="text-xs font-normal text-slate-500 ml-1">
@@ -295,7 +380,7 @@ useEffect(() => {
                               </span>
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 sm:px-4 sm:py-3">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
                               d.status === 'Accepté' 
                                 ? 'bg-green-50 text-green-700 border border-green-200' 
@@ -310,8 +395,8 @@ useEffect(() => {
                               {d.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-slate-600 font-medium text-sm">{d.date_reservation}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 sm:px-4 sm:py-3 text-slate-600 font-medium text-sm">{d.date_reservation}</td>
+                          <td className="px-3 py-2 sm:px-4 sm:py-3">
                             <div className="flex space-x-1.5">
                               <button className="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center text-xs">
                                 <i className="fa-solid fa-eye mr-1.5 text-xs"></i>
@@ -347,12 +432,12 @@ useEffect(() => {
           <div className="w-full max-w-full">
 
 
-            <div className="max-w-6xl mx-auto space-y-8">
+              <div className="max-w-6xl mx-auto space-y-6">
               {/* Profile Header Card */}
-              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
-                <div className="flex items-center space-x-6">
-                  <div className="relative">
-                    <img src={userData.photo || "user.png"} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center space-x-0 sm:space-x-6 gap-4 sm:gap-0">
+                  <div className="relative mx-auto sm:mx-0">
+                    <img src={userData.photo || "user.png"} alt="Profile" className="w-28 h-28 sm:w-24 sm:h-24 rounded-full object-cover" />
                     <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
                       <i className="fa-solid fa-camera text-sm"></i>
                     </button>
@@ -365,10 +450,10 @@ useEffect(() => {
                       className="hidden"
                     />
                   </div>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-slate-800">{profile.name || 'Sarah Bennani'}</h2>
+                  <div className="flex-1 text-center sm:text-left">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{profile.name || 'Sarah Bennani'}</h2>
                     <p className="text-slate-600 mt-1">Membre depuis janvier 2024</p>
-                    <div className="flex items-center mt-3 space-x-4">
+                    <div className="flex items-center mt-3 justify-center sm:justify-start space-x-3">
                       <span className="flex items-center text-sm text-slate-600">
                         <i className="fa-solid fa-calendar-check mr-2 text-blue-500"></i>
                         8 demandes
@@ -383,7 +468,7 @@ useEffect(() => {
               </div>
 
               {/* Personal Information Section */}
-              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-6 sm:p-8">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                     <i className="fa-solid fa-user text-blue-600 text-lg"></i>
@@ -448,7 +533,7 @@ useEffect(() => {
               </div>
 
               {/* Preferences Section */}
-              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-6 sm:p-8">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
                     <i className="fa-solid fa-heart text-green-600 text-lg"></i>
@@ -569,7 +654,7 @@ useEffect(() => {
               </div>
 
               {/* Notifications Section */}
-              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-8">
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 p-6 sm:p-8">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4">
                     <i className="fa-solid fa-bell text-orange-600 text-lg"></i>
@@ -621,9 +706,9 @@ useEffect(() => {
               <div className="flex items-center justify-center pt-4">
                 <button 
                   onClick={handleProfileSubmit}
-                  className="px-12 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-lg rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="w-full sm:w-auto px-6 sm:px-12 py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-base sm:text-lg rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
-                  <i className="fa-solid fa-save mr-3"></i>
+                  <i className="fa-solid fa-save mr-2"></i>
                   Sauvegarder les modifications
                 </button>
               </div>
