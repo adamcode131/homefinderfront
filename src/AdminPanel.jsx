@@ -19,6 +19,7 @@ export default function AdminPanel() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [propertySearch, setPropertySearch] = useState('');
   const [cityFilter, setCityFilter] = useState('');
+  const [property,setProperty] = useState() ; 
   // VIEW PROFILE
   const [selectedUser, setSelectedUser] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -427,6 +428,16 @@ const handleBalanceChange = (amount) => {
       console.log(res.data.user)
     })
   },[])
+
+
+  const gotoUpdateProperty = (id)=>{
+    navigate(`/admin-update-property/${id}`)
+  }
+
+  const changeState = (id)=>{
+    axios.get(`http://localhost:8000/api/getproperty/${id}`,{headers : {Authorization : `Bearer ${localStorage.getItem('token')}`}})
+    .then(res => navigate('/change-state' , {state : res.data}))
+  }
 
 
   return (
@@ -986,6 +997,29 @@ const handleBalanceChange = (amount) => {
                           )}
                         </div>
                       )}
+
+                            {/* Action Button */}
+                          <button
+                            onClick = {()=>gotoUpdateProperty(property.id)}
+                            className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white 
+                                      font-semibold py-3 px-4 rounded-xl transition-all duration-300 
+                                      transform hover:scale-[1.02] active:scale-[0.98] 
+                                      shadow-lg hover:shadow-blue-200 flex items-center justify-center gap-2"
+                          >
+                            <i className="fa-solid fa-eye"></i>
+                            Update Property
+                          </button>
+
+                          <button
+                            onClick = {()=>changeState(property.id)}
+                          className="w-full mt-4 bg-green-600 hover:bg-blue-700 text-white 
+                                    font-semibold py-3 px-4 rounded-xl transition-all duration-300 
+                                    transform hover:scale-[1.02] active:scale-[0.98] 
+                                    shadow-lg hover:shadow-blue-200 flex items-center justify-center gap-2"
+                        >
+                          <i className="fa-solid fa-arrows-rotate"></i>
+                          change state
+                        </button>
                     </div>
                   </div>
                 ))}

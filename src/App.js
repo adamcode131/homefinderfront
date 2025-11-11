@@ -19,6 +19,7 @@ import LoginTest from "./TEST/LoginTest.jsx";
 import ResultDetails from "./ResultDetails.jsx";
 import Loading from "./Loading.jsx";
 import AdminProfile from "./AdminProfile.jsx";
+import ChangeState from "./ChangeState.jsx";
 
 
 export default function App() {
@@ -74,7 +75,10 @@ export default function App() {
 
                         <Route path="/admin-profile" element={<AdminProfile/>} />
 
+                        <Route path="/admin-update-property/:propertyId" element={<UpdateProperty/>} />
+                        <Route path="/change-state" element={<ChangeState/>} />
 
+                        
                     </Routes>
                 </BrowserRouter>
             </AuthProvider>
