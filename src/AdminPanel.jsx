@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios' ; 
 import { useNavigate } from 'react-router-dom';
-
+import PaymentRow from './PaymentRow'
 export default function AdminPanel() {
   const [section, setSection] = useState('dashboard');
   const [pendingProperties, setPendingProperties] = useState([]);
@@ -425,7 +425,6 @@ const handleBalanceChange = (amount) => {
     axios.get('http://localhost:8000/api/user',{headers : {Authorization : `Bearer ${localStorage.getItem('token')}`}})
     .then((res) => {
       setUser(res.data.user)  
-      console.log(res.data.user)
     })
   },[])
 
@@ -439,27 +438,165 @@ const handleBalanceChange = (amount) => {
     .then(res => navigate('/change-state' , {state : res.data}))
   }
 
+// Add these states to your component (at the top with other useState declarations)
+const [payments, setPayments] = useState([]);
+const [paymentsLoading, setPaymentsLoading] = useState(true);
+const [paymentsError, setPaymentsError] = useState(null);
+
+// Add this function to fetch payments
+const fetchPayments = async () => {
+  const token = localStorage.getItem("token");
+  setPaymentsLoading(true);
+  setPaymentsError(null);
+
+  try {
+    const response = await fetch("http://localhost:8000/api/payment", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch payments");
+    }
+
+    const data = await response.json();
+    setPayments(data.payments || data); // Adjust based on your API response structure
+  } catch (err) {
+    console.error("Error fetching payments:", err);
+    setPaymentsError(err.message);
+  } finally {
+    setPaymentsLoading(false);
+  }
+};
+
+// Add this useEffect to fetch payments when section changes
+useEffect(() => {
+  if (section === "paiments") {
+    fetchPayments();
+  }
+}, [section]);
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      {/* Sidebar */}
-  <aside className="hidden md:block w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center justify-center mb-2">
-          <img 
-            src="./logo.svg" 
-            alt="Company Logo" 
-            className="w-16 h-16 object-contain" 
-          />
-        </div>
-        <p className="text-sm text-gray-600 text-center font-medium">Admin Dashboard</p>
-      </div>
+<aside className="hidden md:block w-64 bg-white shadow-soft border-r border-gray-200 fixed left-0 top-0 h-full z-40">
+  <div className="p-6 border-b border-gray-200">
+    <div className="flex items-center justify-center mb-2">
+      <img 
+        src="./logo.svg" 
+        alt="Company Logo" 
+        className="w-16 h-16 object-contain" 
+      />
+    </div>
+    <p className="text-sm text-gray-600 text-center font-medium">Admin Dashboard</p>
+  </div>
+  
+  <nav className="p-4">
+    <div className="space-y-2">
+      <button
+        onClick={() => setSection('dashboard')}
+        className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+          section === 'dashboard'
+            ? 'text-primary bg-blue-50 font-medium'
+            : 'text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <i className="fa-solid fa-chart-line mr-3 w-5"></i>
+        Dashboard
+      </button>
+      <button
+        onClick={() => setSection('users')}
+        className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+          section === 'users'
+            ? 'text-primary bg-blue-50 font-medium'
+            : 'text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <i className="fa-solid fa-users mr-3 w-5"></i>
+        Users
+      </button>
+      <button
+        onClick={() => setSection('not_validated_properties')}
+        className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+          section === 'not_validated_properties'
+            ? 'text-primary bg-blue-50 font-medium'
+            : 'text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <i className="fa-solid fa-clock mr-3 w-5"></i>
+        Pending Properties
+      </button>
+      <button
+        onClick={() => setSection('all_properties')}
+        className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+          section === 'all_properties'
+            ? 'text-primary bg-blue-50 font-medium'
+            : 'text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <i className="fa-solid fa-building mr-3 w-5"></i>
+        All Properties
+      </button>
       
-      <nav className="p-4">
-        <div className="space-y-2">
+      {/* ✅ ADD THIS BUTTON - Paiments for Desktop Sidebar */}
+      <button
+        onClick={() => setSection('paiments')}
+        className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+          section === 'paiments'
+            ? 'text-primary bg-blue-50 font-medium'
+            : 'text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <i className="fa-solid fa-credit-card mr-3 w-5"></i>
+        Paiments
+      </button>
+    </div>
+  </nav>
+
+  <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+    <div className="flex items-center space-x-3">
+      <img onClick={()=>{navigate('/admin-profile')}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
+      <div className="flex-1">
+        <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+        <div className="text-xs text-gray-600">{user.role}</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+    {/* Mobile drawer (only visible on small screens) — kept in DOM for smooth animations */}
+    <div className={`fixed inset-0 z-50 md:hidden flex ${drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      {/* Backdrop with fade animation */}
+      <div
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${drawerOpen ? 'opacity-100' : 'opacity-0'}`}
+        onClick={() => setDrawerOpen(false)}
+        aria-hidden={!drawerOpen}
+      />
+
+      {/* Sidebar slides in from the left */}
+      <aside
+        className={`relative w-64 bg-white shadow-lg border-r border-gray-200 h-full z-50 p-6 overflow-y-auto transform transition-transform duration-300 ease-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        aria-hidden={!drawerOpen}
+        style={{ willChange: 'transform, opacity' }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <img src="./logo.svg" alt="Company Logo" className="w-12 h-12 object-contain" />
+            <div className="ml-3">
+              <p className="text-sm text-gray-600 font-medium">Admin Dashboard</p>
+            </div>
+          </div>
+          <button onClick={() => setDrawerOpen(false)} className="p-2 rounded-md">
+            <i className="fa-solid fa-xmark text-2xl"></i>
+          </button>
+        </div>
+
+        <nav className="space-y-2">
           <button
-            onClick={() => setSection('dashboard')}
-            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+            onClick={() => { setSection('dashboard'); setDrawerOpen(false); }}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
               section === 'dashboard'
                 ? 'text-primary bg-blue-50 font-medium'
                 : 'text-gray-700 hover:bg-gray-50'
@@ -469,8 +606,8 @@ const handleBalanceChange = (amount) => {
             Dashboard
           </button>
           <button
-            onClick={() => setSection('users')}
-            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+            onClick={() => { setSection('users'); setDrawerOpen(false); }}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
               section === 'users'
                 ? 'text-primary bg-blue-50 font-medium'
                 : 'text-gray-700 hover:bg-gray-50'
@@ -480,8 +617,8 @@ const handleBalanceChange = (amount) => {
             Users
           </button>
           <button
-            onClick={() => setSection('not_validated_properties')}
-            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+            onClick={() => { setSection('not_validated_properties'); setDrawerOpen(false); }}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
               section === 'not_validated_properties'
                 ? 'text-primary bg-blue-50 font-medium'
                 : 'text-gray-700 hover:bg-gray-50'
@@ -491,8 +628,8 @@ const handleBalanceChange = (amount) => {
             Pending Properties
           </button>
           <button
-            onClick={() => setSection('all_properties')}
-            className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+            onClick={() => { setSection('all_properties'); setDrawerOpen(false); }}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
               section === 'all_properties'
                 ? 'text-primary bg-blue-50 font-medium'
                 : 'text-gray-700 hover:bg-gray-50'
@@ -501,96 +638,32 @@ const handleBalanceChange = (amount) => {
             <i className="fa-solid fa-building mr-3 w-5"></i>
             All Properties
           </button>
-        </div>
-      </nav>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-center space-x-3">
-          <img onClick={()=>{navigate('/admin-profile')}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-gray-900">{user.name}</div>
-            <div className="text-xs text-gray-600">{user.role}</div>
-          </div>
-        </div>
-      </div>
-    </aside>
 
-    {/* Mobile drawer (only visible on small screens) */}
-    {drawerOpen && (
-      <div className="fixed inset-0 z-50 md:hidden flex">
-        <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} />
-        <aside className="relative w-64 bg-white shadow-lg border-r border-gray-200 h-full z-50 p-6 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <img src="./logo.svg" alt="Company Logo" className="w-12 h-12 object-contain" />
-              <div className="ml-3">
-                <p className="text-sm text-gray-600 font-medium">Admin Dashboard</p>
-              </div>
-            </div>
-            <button onClick={() => setDrawerOpen(false)} className="p-2 rounded-md">
-              <i className="fa-solid fa-xmark text-2xl"></i>
-            </button>
-          </div>
+          <button
+            onClick={() => { setSection('paiments'); setDrawerOpen(false); }}
+            className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
+              section === 'paiments'
+                ? 'text-primary bg-blue-50 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <i className="fa-solid fa-credit-card mr-3 w-5"></i> {/* Changed from building to credit-card */}
+            Paiments
+          </button>
+        </nav>
 
-          <nav className="space-y-2">
-            <button
-              onClick={() => { setSection('dashboard'); setDrawerOpen(false); }}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
-                section === 'dashboard'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-chart-line mr-3 w-5"></i>
-              Dashboard
-            </button>
-            <button
-              onClick={() => { setSection('users'); setDrawerOpen(false); }}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
-                section === 'users'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-users mr-3 w-5"></i>
-              Users
-            </button>
-            <button
-              onClick={() => { setSection('not_validated_properties'); setDrawerOpen(false); }}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
-                section === 'not_validated_properties'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-clock mr-3 w-5"></i>
-              Pending Properties
-            </button>
-            <button
-              onClick={() => { setSection('all_properties'); setDrawerOpen(false); }}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors w-full text-left ${
-                section === 'all_properties'
-                  ? 'text-primary bg-blue-50 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <i className="fa-solid fa-building mr-3 w-5"></i>
-              All Properties
-            </button>
-          </nav>
-
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-            <div className="flex items-center space-x-3">
-              <img onClick={()=>{navigate('/admin-profile'); setDrawerOpen(false);}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-900">{user.name}</div>
-                <div className="text-xs text-gray-600">{user.role}</div>
-              </div>
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+          <div className="flex items-center space-x-3">
+            <img onClick={()=>{navigate('/admin-profile'); setDrawerOpen(false);}}  src={`http://localhost:8000/storage/${user.image}`} alt="Admin" className="w-10 h-10 rounded-full object-cover hover:cursor-pointer" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+              <div className="text-xs text-gray-600">{user.role}</div>
             </div>
           </div>
-        </aside>
-      </div>
-    )}
+        </div>
+      </aside>
+    </div>
 
       {/* Main Content - Fixed to account for sidebar (responsive: remove left margin on small screens) */}
       <main className="flex-1 ml-0 md:ml-64 p-3 sm:p-4 md:p-6">
@@ -1028,391 +1101,391 @@ const handleBalanceChange = (amount) => {
           </div>
         )}
 
-{/* Users Section */}
-{section === "users" && (
-  <div className="w-full">
-    {/* Header Section */}
-  <header className="bg-white border-b border-gray-200 px-3 sm:px-6 py-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Users Management</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage platform users and their roles</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button className="flex-1 sm:flex-none px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
-            <i className="fa-solid fa-user-plus mr-2"></i>
-            Add User
-          </button>
-          <button className="flex-1 sm:flex-none px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent/90 transition-colors whitespace-nowrap">
-            <i className="fa-solid fa-download mr-2"></i>
-            Export
-          </button>
-        </div>
-      </div>
-
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 bg-gray-50 p-3 sm:p-4 rounded-xl">
-        <div className="flex-1 min-w-0">
-          <div className="relative">
-            <i className="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            <input 
-              type="text" 
-              placeholder="Search by name or email..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white" 
-            />
-          </div>
-        </div>
-        
-        <select 
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white min-w-[120px]"
-        >
-          <option value="">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="owner">Owner</option>
-          <option value="user">User</option>
-        </select>
-        
-        <button 
-          onClick={() => {
-            setSearchTerm('');
-            setRoleFilter('');
-          }}
-          className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
-        >
-          <i className="fa-solid fa-rotate-right mr-2"></i>
-          Reset
-        </button>
-      </div>
-    </header>
-
-    {/* Analytics Summary Strip */}
-  <div className="px-4 sm:px-8 py-4">
-      {/* Calculate filtered users for analytics */}
-      {(() => {
-        const filteredUsers = users.filter(user => {
-          const matchesSearch = searchTerm === '' || 
-            (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
-          
-          const matchesRole = roleFilter === '' || user.role === roleFilter;
-          
-          return matchesSearch && matchesRole;
-        });
-
-        return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
-              <div className="flex items-center justify-between">
+        {/* Users Section */}
+        {section === "users" && (
+          <div className="w-full">
+            {/* Header Section */}
+          <header className="bg-white border-b border-gray-200 px-3 sm:px-6 py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{filteredUsers.length}</p>
-                  <p className="text-xs text-gray-500 mt-1">of {users.length} total</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Users Management</h1>
+                  <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage platform users and their roles</p>
                 </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <i className="fa-solid fa-users text-primary"></i>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Active Users</p>
-                  <p className="text-2xl font-bold text-accent mt-1">{filteredUsers.filter(u => u.isActive).length}</p>
-                </div>
-                <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
-                  <i className="fa-solid fa-user-check text-accent"></i>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Owners</p>
-                  <p className="text-2xl font-bold text-orange-500 mt-1">{filteredUsers.filter(u => u.role === 'owner').length}</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                  <i className="fa-solid fa-user-tie text-orange-500"></i>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Admins</p>
-                  <p className="text-2xl font-bold text-red-500 mt-1">{filteredUsers.filter(u => u.role === 'admin').length}</p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <i className="fa-solid fa-user-shield text-red-500"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-    </div>
-
-      {/* Users Grid */}
-  <div className="px-3 sm:px-6 pb-6">
-      {(() => {
-        const filteredUsers = users.filter(user => {
-          const matchesSearch = searchTerm === '' || 
-            (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
-          
-          const matchesRole = roleFilter === '' || user.role === roleFilter;          return matchesSearch && matchesRole;
-        });
-
-        return filteredUsers.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-blue-50 to-white rounded-full flex items-center justify-center shadow-lg border border-blue-100">
-              <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-semibold text-blue-800 mb-3">No Users Found</h3>
-            <p className="text-gray-500 max-w-md mx-auto">
-              {users.length === 0 
-                ? "There are no users in the system yet. Users will appear here once they register."
-                : "No users match your current filters. Try adjusting your search criteria."
-              }
-            </p>
-            {(searchTerm || roleFilter) && (
-              <button 
-                onClick={() => {
-                  setSearchTerm('');
-                  setRoleFilter('');
-                }}
-                className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredUsers.map((user, index) => {
-              const roleColors = {
-                admin: {
-                  badge: 'bg-red-100 text-red-700',
-                  avatar: 'bg-red-500',
-                  button: 'bg-primary'
-                },
-                owner: {
-                  badge: 'bg-green-100 text-green-700',
-                  avatar: 'bg-accent',
-                  button: 'bg-accent'
-                },
-                user: {
-                  badge: 'bg-blue-100 text-blue-700',
-                  avatar: 'bg-primary',
-                  button: 'bg-primary'
-                }
-              };
-
-              const colors = roleColors[user.role] || roleColors.user;
-
-              // Fix avatar generation
-              const getAvatarInitials = (userName) => {
-                if (!userName) return 'U';
-                const names = userName.trim().split(' ');
-                if (names.length === 1) {
-                  return names[0].charAt(0).toUpperCase();
-                }
-                return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
-              };
-
-              const avatarInitials = getAvatarInitials(user.name);
-
-              return (
-                <div key={user.id} className="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 hover:shadow-card-hover transition-all duration-300 relative">
-                  <div className="absolute top-4 right-4">
-                    <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
-                      <i className="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-14 h-14 ${colors.avatar} rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-soft`}>
-                      {avatarInitials}
-                    </div>
-                    <span className={`px-3 py-1.5 ${colors.badge} rounded-full text-sm font-medium`}>
-                      {user.role}
-                    </span>
-                  </div>
-                  
-                  <div className="mb-5">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">{user.name || 'Unknown User'}</h3>
-                    <p className="text-gray-600 text-sm mb-2">{user.email || 'No email'}</p>
-                    <p className="text-gray-500 text-xs">Joined: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown date'}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-3 mb-5 text-center">
-                    <div className="bg-gray-50 rounded-xl p-3">
-                      <div className="text-base font-bold text-gray-900">12</div>
-                      <div className="text-xs text-gray-600">Projects</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-3">
-                      <div className="text-base font-bold text-gray-900">47</div>
-                      <div className="text-xs text-gray-600">Tasks</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-3">
-                      <div className="text-base font-bold text-gray-900">{user.balance || 0}</div>
-                      <div className="text-xs text-gray-600">Balance</div>
-                    </div>
-                  </div>
-                  
-                  <button 
-                    onClick={() => handleViewProfile(user)} 
-                    className={`w-full py-3 ${colors.button} text-white rounded-2xl hover:opacity-90 hover:shadow-card-hover transition-all duration-300 font-medium`}
-                  >
-                    View Profile
+                <div className="flex flex-wrap gap-2">
+                  <button className="flex-1 sm:flex-none px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
+                    <i className="fa-solid fa-user-plus mr-2"></i>
+                    Add User
+                  </button>
+                  <button className="flex-1 sm:flex-none px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent/90 transition-colors whitespace-nowrap">
+                    <i className="fa-solid fa-download mr-2"></i>
+                    Export
                   </button>
                 </div>
-              );
-            })}
-          </div>
-        );
-      })()}
-    </div>
-
-    {/* VIEW PROFILE MODAL */} 
-    {showProfileModal && selectedUser && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-soft max-w-md w-full mx-4 transform transition-all duration-300 scale-100 max-h-[90vh] overflow-y-auto">
-          <div className="p-6">
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <i className="fa-solid fa-user-edit text-primary text-xl"></i>
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Edit User</h2>
-              <p className="text-gray-500 text-sm">Update user information</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={editUserData.name ?? ""}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
-                  placeholder="Enter full name"
-                />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={editUserData.email ?? ""}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
-                  placeholder="Enter email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={editUserData.phone ?? ""}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
-                  placeholder="Enter phone"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <select
-                  name="role"
-                  value={editUserData.role ?? ""}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
-                >
-                  <option value="user">User</option>
-                  <option value="owner">Owner</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Balance</label>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex-1 relative">
-                    <input
-                      type="number"
-                      name="balance"
-                      value={editUserData.balance ?? 0}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 pl-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+              {/* Search and Filters Bar */}
+              <div className="flex flex-col sm:flex-row gap-3 bg-gray-50 p-3 sm:p-4 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <div className="relative">
+                    <i className="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input 
+                      type="text" 
+                      placeholder="Search by name or email..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white" 
                     />
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <i className="fa-solid fa-coins text-sm"></i>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleBalanceChange(100)}
-                      className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium"
-                    >
-                      +100
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBalanceChange(-100)}
-                      className="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-medium"
-                    >
-                      -100
-                    </button>
                   </div>
                 </div>
+                
+                <select 
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white min-w-[120px]"
+                >
+                  <option value="">All Roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="owner">Owner</option>
+                  <option value="user">User</option>
+                </select>
+                
+                <button 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setRoleFilter('');
+                  }}
+                  className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+                >
+                  <i className="fa-solid fa-rotate-right mr-2"></i>
+                  Reset
+                </button>
+              </div>
+            </header>
 
-                {(added_points > 0 || deducted_points > 0) && (
-                  <div className="mt-1 p-2 bg-gray-50 rounded-lg text-xs">
-                    {added_points > 0 && (
-                      <p className="text-green-600">+{added_points} points to add</p>
-                    )}
-                    {deducted_points > 0 && (
-                      <p className="text-red-600">-{deducted_points} points to deduct</p>
+            {/* Analytics Summary Strip */}
+          <div className="px-4 sm:px-8 py-4">
+              {/* Calculate filtered users for analytics */}
+              {(() => {
+                const filteredUsers = users.filter(user => {
+                  const matchesSearch = searchTerm === '' || 
+                    (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+                  
+                  const matchesRole = roleFilter === '' || user.role === roleFilter;
+                  
+                  return matchesSearch && matchesRole;
+                });
+
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Total Users</p>
+                          <p className="text-2xl font-bold text-gray-900 mt-1">{filteredUsers.length}</p>
+                          <p className="text-xs text-gray-500 mt-1">of {users.length} total</p>
+                        </div>
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                          <i className="fa-solid fa-users text-primary"></i>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Active Users</p>
+                          <p className="text-2xl font-bold text-accent mt-1">{filteredUsers.filter(u => u.isActive).length}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
+                          <i className="fa-solid fa-user-check text-accent"></i>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Owners</p>
+                          <p className="text-2xl font-bold text-orange-500 mt-1">{filteredUsers.filter(u => u.role === 'owner').length}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                          <i className="fa-solid fa-user-tie text-orange-500"></i>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-soft border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Admins</p>
+                          <p className="text-2xl font-bold text-red-500 mt-1">{filteredUsers.filter(u => u.role === 'admin').length}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                          <i className="fa-solid fa-user-shield text-red-500"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+              {/* Users Grid */}
+          <div className="px-3 sm:px-6 pb-6">
+              {(() => {
+                const filteredUsers = users.filter(user => {
+                  const matchesSearch = searchTerm === '' || 
+                    (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+                  
+                  const matchesRole = roleFilter === '' || user.role === roleFilter;          return matchesSearch && matchesRole;
+                });
+
+                return filteredUsers.length === 0 ? (
+                  <div className="text-center py-20">
+                    <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-blue-50 to-white rounded-full flex items-center justify-center shadow-lg border border-blue-100">
+                      <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-semibold text-blue-800 mb-3">No Users Found</h3>
+                    <p className="text-gray-500 max-w-md mx-auto">
+                      {users.length === 0 
+                        ? "There are no users in the system yet. Users will appear here once they register."
+                        : "No users match your current filters. Try adjusting your search criteria."
+                      }
+                    </p>
+                    {(searchTerm || roleFilter) && (
+                      <button 
+                        onClick={() => {
+                          setSearchTerm('');
+                          setRoleFilter('');
+                        }}
+                        className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                      >
+                        Clear Filters
+                      </button>
                     )}
                   </div>
-                )}
-              </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredUsers.map((user, index) => {
+                      const roleColors = {
+                        admin: {
+                          badge: 'bg-red-100 text-red-700',
+                          avatar: 'bg-red-500',
+                          button: 'bg-primary'
+                        },
+                        owner: {
+                          badge: 'bg-green-100 text-green-700',
+                          avatar: 'bg-accent',
+                          button: 'bg-accent'
+                        },
+                        user: {
+                          badge: 'bg-blue-100 text-blue-700',
+                          avatar: 'bg-primary',
+                          button: 'bg-primary'
+                        }
+                      };
 
-              <div className="flex space-x-2 pt-4">
-                <button
-                  onClick={handleCloseModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveUser}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium text-sm shadow-soft"
-                >
-                  Save
-                </button>
-              </div>
+                      const colors = roleColors[user.role] || roleColors.user;
+
+                      // Fix avatar generation
+                      const getAvatarInitials = (userName) => {
+                        if (!userName) return 'U';
+                        const names = userName.trim().split(' ');
+                        if (names.length === 1) {
+                          return names[0].charAt(0).toUpperCase();
+                        }
+                        return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+                      };
+
+                      const avatarInitials = getAvatarInitials(user.name);
+
+                      return (
+                        <div key={user.id} className="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 hover:shadow-card-hover transition-all duration-300 relative">
+                          <div className="absolute top-4 right-4">
+                            <button className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
+                              <i className="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center justify-between mb-4">
+                            <div className={`w-14 h-14 ${colors.avatar} rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-soft`}>
+                              {avatarInitials}
+                            </div>
+                            <span className={`px-3 py-1.5 ${colors.badge} rounded-full text-sm font-medium`}>
+                              {user.role}
+                            </span>
+                          </div>
+                          
+                          <div className="mb-5">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">{user.name || 'Unknown User'}</h3>
+                            <p className="text-gray-600 text-sm mb-2">{user.email || 'No email'}</p>
+                            <p className="text-gray-500 text-xs">Joined: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown date'}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-3 mb-5 text-center">
+                            <div className="bg-gray-50 rounded-xl p-3">
+                              <div className="text-base font-bold text-gray-900">12</div>
+                              <div className="text-xs text-gray-600">Projects</div>
+                            </div>
+                            <div className="bg-gray-50 rounded-xl p-3">
+                              <div className="text-base font-bold text-gray-900">47</div>
+                              <div className="text-xs text-gray-600">Tasks</div>
+                            </div>
+                            <div className="bg-gray-50 rounded-xl p-3">
+                              <div className="text-base font-bold text-gray-900">{user.balance || 0}</div>
+                              <div className="text-xs text-gray-600">Balance</div>
+                            </div>
+                          </div>
+                          
+                          <button 
+                            onClick={() => handleViewProfile(user)} 
+                            className={`w-full py-3 ${colors.button} text-white rounded-2xl hover:opacity-90 hover:shadow-card-hover transition-all duration-300 font-medium`}
+                          >
+                            View Profile
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
+
+            {/* VIEW PROFILE MODAL */} 
+            {showProfileModal && selectedUser && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-soft max-w-md w-full mx-4 transform transition-all duration-300 scale-100 max-h-[90vh] overflow-y-auto">
+                  <div className="p-6">
+                    <div className="text-center mb-6">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i className="fa-solid fa-user-edit text-primary text-xl"></i>
+                      </div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-1">Edit User</h2>
+                      <p className="text-gray-500 text-sm">Update user information</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={editUserData.name ?? ""}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                          placeholder="Enter full name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={editUserData.email ?? ""}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                          placeholder="Enter email"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={editUserData.phone ?? ""}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                          placeholder="Enter phone"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <select
+                          name="role"
+                          value={editUserData.role ?? ""}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                        >
+                          <option value="user">User</option>
+                          <option value="owner">Owner</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Balance</label>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex-1 relative">
+                            <input
+                              type="number"
+                              name="balance"
+                              value={editUserData.balance ?? 0}
+                              onChange={handleInputChange}
+                              className="w-full px-3 py-2 pl-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-gray-50/50 text-sm"
+                            />
+                            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                              <i className="fa-solid fa-coins text-sm"></i>
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleBalanceChange(100)}
+                              className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium"
+                            >
+                              +100
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBalanceChange(-100)}
+                              className="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-medium"
+                            >
+                              -100
+                            </button>
+                          </div>
+                        </div>
+
+                        {(added_points > 0 || deducted_points > 0) && (
+                          <div className="mt-1 p-2 bg-gray-50 rounded-lg text-xs">
+                            {added_points > 0 && (
+                              <p className="text-green-600">+{added_points} points to add</p>
+                            )}
+                            {deducted_points > 0 && (
+                              <p className="text-red-600">-{deducted_points} points to deduct</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex space-x-2 pt-4">
+                        <button
+                          onClick={handleCloseModal}
+                          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveUser}
+                          className="flex-1 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium text-sm shadow-soft"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-    )}
-  </div>
-)}
+        )}
 
         {/* Dashboard Section */}
         {section === "dashboard" && (
@@ -1692,6 +1765,134 @@ const handleBalanceChange = (amount) => {
             )}
           </div>
         )}
+
+{section === "paiments" && (
+  <div className="bg-white rounded-3xl p-8 border border-gray-200">
+    <div className="flex items-center justify-between mb-8">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Payment History</h2>
+        <p className="text-gray-600 mt-1">Manage payment transactions and user balances</p>
+      </div>
+      <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+        <i className="fa-solid fa-clock mr-2"></i>
+        Real-time updates
+      </div>
+    </div>
+
+    {paymentsLoading ? (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    ) : paymentsError ? (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i className="fa-solid fa-exclamation-triangle text-red-500 text-xl"></i>
+        </div>
+        <p className="text-red-500 text-lg font-medium mb-2">Error loading payments</p>
+        <p className="text-gray-600">{paymentsError}</p>
+        <button
+          onClick={fetchPayments}
+          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    ) : payments.length === 0 ? (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i className="fa-solid fa-receipt text-gray-400 text-xl"></i>
+        </div>
+        <p className="text-gray-500 text-lg font-medium">No payments found</p>
+        <p className="text-gray-400 mt-1">Your payment history will appear here</p>
+      </div>
+    ) : (
+      <div className="overflow-hidden rounded-2xl border border-gray-200">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date</th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">User</th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Amount</th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Points</th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
+              <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {payments.map((payment) => (
+              <PaymentRow 
+                key={payment.id} 
+                payment={payment} 
+                onUpdate={fetchPayments}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    {/* Stats Summary */}
+    {payments.length > 0 && (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+        <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-600 text-sm font-medium">Total Spent</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {payments.reduce((total, payment) => total + payment.amount, 0)} DH
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <i className="fa-solid fa-money-bill-wave text-blue-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-green-50 rounded-2xl p-6 border border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-600 text-sm font-medium">Total Points</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {payments.reduce((total, payment) => total + payment.points, 0)}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <i className="fa-solid fa-coins text-green-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-purple-50 rounded-2xl p-6 border border-purple-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-600 text-sm font-medium">Completed</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {payments.filter(p => p.status === 'completed').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <i className="fa-solid fa-check-circle text-purple-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-orange-50 rounded-2xl p-6 border border-orange-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-600 text-sm font-medium">Pending</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {payments.filter(p => p.status === 'pending').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <i className="fa-solid fa-clock text-orange-600 text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
       </main>
     </div>
   );

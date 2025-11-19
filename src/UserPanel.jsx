@@ -250,16 +250,17 @@ useEffect(() => {
         </div>
       </aside>
 
-      {/* Mobile Drawer */}
-      <div className={`md:hidden fixed inset-0 z-30 ${drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-        {/* Backdrop */}
+      {/* Mobile Drawer (kept in DOM for smooth animations) */}
+      <div className={`md:hidden fixed inset-0 z-30 flex ${drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        {/* Backdrop with fade animation */}
         <div
-          className={`absolute inset-0 bg-black transition-opacity duration-200 ${drawerOpen ? 'opacity-50' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${drawerOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setDrawerOpen(false)}
+          aria-hidden={!drawerOpen}
         />
 
-        {/* Drawer panel */}
-        <aside className={`absolute left-0 top-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-200 ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Drawer panel slides in from left */}
+        <aside className={`relative w-64 bg-white shadow-xl transform transition-transform duration-300 ease-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`} aria-hidden={!drawerOpen} style={{ willChange: 'transform, opacity' }}>
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
             <div className="text-lg font-semibold">Menu</div>
             <button onClick={() => setDrawerOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-600">

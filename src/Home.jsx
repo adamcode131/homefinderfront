@@ -150,9 +150,7 @@ export default function Home() {
       >
         {/* Logo */}
         <div className="flex items-center group">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
             <LogoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
           <span className="ml-2 sm:ml-3 text-xl sm:text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
             Daryol
           </span>

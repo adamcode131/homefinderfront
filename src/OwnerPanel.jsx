@@ -7,6 +7,7 @@ import axios from 'axios';
 import {motion, AnimatePresence } from "framer-motion";
 import ContactOwner from './ContactOwner.jsx';
 import NotificationsPanel from './NotificationsPanel.jsx';
+import Payment from './Payment.jsx';
 
 
 
@@ -494,6 +495,33 @@ function Balance() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
+  // Single state for payment modal
+  const [paymentModal, setPaymentModal] = useState({
+    isOpen: false,
+    packageName: '',
+    points: 0,
+    price: 0
+  });
+
+  const openPaymentModal = (packageName, points, price) => {
+    setPaymentModal({
+      isOpen: true,
+      packageName,
+      points,
+      price
+    });
+  };
+
+  const closePaymentModal = () => {
+    setPaymentModal({
+      isOpen: false,
+      packageName: '',
+      points: 0,
+      price: 0
+    });
+  };
+
   // ✅ userId state removed - no longer needed
 
   useEffect(() => {
@@ -633,9 +661,15 @@ function Balance() {
                     Email support
                   </li>
                 </ul>
-                <button className="w-full py-4 bg-coral text-white rounded-2xl hover:bg-coral/90 transition-colors font-semibold">
-                  Buy Now
-                </button>
+
+                <div>
+                  <button 
+                    onClick={() => openPaymentModal('Starter', 100, 50)}
+                    className="w-full py-4 bg-coral text-white rounded-2xl hover:bg-coral/90 transition-colors font-semibold"
+                  >
+                    Buy Now
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -676,9 +710,15 @@ function Balance() {
                     Advanced statistics
                   </li>
                 </ul>
-                <button className="w-full py-4 bg-coral text-white rounded-2xl hover:bg-coral/90 transition-colors font-semibold">
-                  Buy Now
-                </button>
+                {/* BUY BUTTON */}
+                <div>
+                  <button 
+                    onClick={() => openPaymentModal('Professional', 300, 150)}
+                    className="w-full py-4 bg-coral text-white rounded-2xl hover:bg-coral/90 transition-colors font-semibold"
+                  >
+                    Buy Now
+                  </button> 
+                </div>
               </div>
             </div>
 
@@ -716,9 +756,15 @@ function Balance() {
                     API access
                   </li>
                 </ul>
-                <button className="w-full py-4 bg-purple text-white rounded-2xl hover:bg-purple/90 transition-colors font-semibold">
-                  Buy Now
-                </button>
+                {/* BUY BUTTON */}
+                <div>
+              <button 
+                    onClick={() => openPaymentModal('Enterprise', 500, 250)}
+                    className="w-full py-4 bg-coral text-white rounded-2xl hover:bg-coral/90 transition-colors font-semibold"
+              >
+                    Buy Now
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -779,6 +825,14 @@ function Balance() {
       <NotificationsPanel 
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
+      />
+
+        <Payment 
+        isOpen={paymentModal.isOpen} 
+        onClose={closePaymentModal}
+        packageName={paymentModal.packageName}
+        points={paymentModal.points}
+        price={paymentModal.price}
       />
     </div>
   );
@@ -1638,115 +1692,115 @@ export default function OwnerPanel() {
         </div>
       </aside>
 
-      {/* Mobile Drawer */}
-      <div
-        className={`md:hidden fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300 ${
-          drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={() => setDrawerOpen(false)}
-      ></div>
-      
-      <aside className={`md:hidden fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-40 transform transition-transform duration-300 ${
-        drawerOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-200">
-            <div className="text-xl font-bold text-primary flex items-center">
-              <i className="fa-solid fa-home mr-2"></i>
-              PropertyAI
-            </div>
-            <p className="text-sm text-gray-600 mt-1">Tableau de bord propriétaire</p>
-          </div>
-          
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  setMainSection('properties');
-                  setDrawerOpen(false);
-                }}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                  mainSection === 'properties'
-                    ? 'text-primary bg-blue-50 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <i className="fa-solid fa-building mr-3 w-5"></i>
-                Mes Propriétés
-              </button>
-              <button
-                onClick={() => {
-                  setMainSection('balance');
-                  setDrawerOpen(false);
-                }}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                  mainSection === 'balance'
-                    ? 'text-primary bg-blue-50 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <i className="fa-solid fa-wallet mr-3 w-5"></i>
-                Balance
-                <span className="ml-auto bg-accent text-white text-xs px-2 py-1 rounded-full">450 DH</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMainSection('leads');
-                  setDrawerOpen(false);
-                }}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                  mainSection === 'leads'
-                    ? 'text-primary bg-blue-50 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <i className="fa-solid fa-users mr-3 w-5"></i>
-                Leads
-                <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">12</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMainSection('contact');
-                  setDrawerOpen(false);
-                }}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
-                  mainSection === 'contact'
-                    ? 'text-primary bg-blue-50 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <i className="fa-solid fa-envelope mr-3 w-5"></i>
-                Contact
-              </button>
-            </div>
-          </nav>
+      {/* Mobile Drawer (kept in DOM for smooth animations) */}
+      <div className={`md:hidden fixed inset-0 z-30 flex ${drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        {/* Backdrop with fade animation */}
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${drawerOpen ? 'opacity-100' : 'opacity-0'}`}
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden={!drawerOpen}
+        />
 
-          <div className="p-4 border-t border-gray-200 bg-white">
-            <div className="flex items-center space-x-3">
-              <img 
-                src={userData.photo} 
-                alt="Profile" 
-                className="w-10 h-10 rounded-full object-cover cursor-pointer" 
-                onClick={() => navigate('/admin-profile')}
-              />
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-900">
-                  {loading ? 'Chargement...' : userData.name}
-                </div>
-                <div className="text-xs text-gray-600">
-                  {userData.role}
-                </div>
+        <aside className={`relative w-64 bg-white shadow-xl z-40 transform transition-transform duration-300 ease-out ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`} aria-hidden={!drawerOpen} style={{ willChange: 'transform, opacity' }}>
+          <div className="flex flex-col h-full">
+            <div className="p-6 border-b border-gray-200">
+              <div className="text-xl font-bold text-primary flex items-center">
+                <i className="fa-solid fa-home mr-2"></i>
+                PropertyAI
               </div>
-              <button 
-                onClick={handleLogout}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
-              >
-                <i className="fa-solid fa-sign-out-alt"></i>
-              </button>
+              <p className="text-sm text-gray-600 mt-1">Tableau de bord propriétaire</p>
+            </div>
+            
+            <nav className="flex-1 p-4">
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setMainSection('properties');
+                    setDrawerOpen(false);
+                  }}
+                  className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                    mainSection === 'properties'
+                      ? 'text-primary bg-blue-50 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <i className="fa-solid fa-building mr-3 w-5"></i>
+                  Mes Propriétés
+                </button>
+                <button
+                  onClick={() => {
+                    setMainSection('balance');
+                    setDrawerOpen(false);
+                  }}
+                  className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                    mainSection === 'balance'
+                      ? 'text-primary bg-blue-50 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <i className="fa-solid fa-wallet mr-3 w-5"></i>
+                  Balance
+                  <span className="ml-auto bg-accent text-white text-xs px-2 py-1 rounded-full">450 DH</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMainSection('leads');
+                    setDrawerOpen(false);
+                  }}
+                  className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                    mainSection === 'leads'
+                      ? 'text-primary bg-blue-50 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <i className="fa-solid fa-users mr-3 w-5"></i>
+                  Leads
+                  <span className="ml-auto bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">12</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMainSection('contact');
+                    setDrawerOpen(false);
+                  }}
+                  className={`flex items-center px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${
+                    mainSection === 'contact'
+                      ? 'text-primary bg-blue-50 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <i className="fa-solid fa-envelope mr-3 w-5"></i>
+                  Contact
+                </button>
+              </div>
+            </nav>
+
+            <div className="p-4 border-t border-gray-200 bg-white">
+              <div className="flex items-center space-x-3">
+                <img 
+                  src={userData.photo} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover cursor-pointer" 
+                  onClick={() => navigate('/admin-profile')}
+                />
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-gray-900">
+                    {loading ? 'Chargement...' : userData.name}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    {userData.role}
+                  </div>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+                >
+                  <i className="fa-solid fa-sign-out-alt"></i>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 md:ml-64 pt-16 md:pt-0">

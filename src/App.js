@@ -20,6 +20,7 @@ import ResultDetails from "./ResultDetails.jsx";
 import Loading from "./Loading.jsx";
 import AdminProfile from "./AdminProfile.jsx";
 import ChangeState from "./ChangeState.jsx";
+import Payment from "./Payment.jsx";
 
 
 export default function App() {
@@ -78,7 +79,7 @@ export default function App() {
                         <Route path="/admin-update-property/:propertyId" element={<UpdateProperty/>} />
                         <Route path="/change-state" element={<ChangeState/>} />
 
-                        
+                        <Route path="/payment" element={<Payment/>} />
                     </Routes>
                 </BrowserRouter>
             </AuthProvider>
