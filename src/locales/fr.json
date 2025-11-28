@@ -1,0 +1,41 @@
+{
+  "brand": {
+    "logo": "Logo Daryol",
+    "name": "Daryol",
+    "powered": "Propulsé par l'intelligence artificielle"
+  },
+
+  "search": {
+    "placeholder": "Ex : 2 chambres, 1 salon, quartier Gauthier",
+    "search": "Rechercher",
+    "around_me": "Autour de moi",
+    "disabled": "Désactivé",
+    "title": "Trouvez votre maison grâce à la recherche IA"
+  },
+
+  "filters": {
+    "bedroom_1": "1 Chambre",
+    "maarif": "Maârif",
+    "less_5000": "Moins de 5000 DH",
+    "more_200": "Plus de 200 mètres carrés"
+  },
+
+  "features": {
+    "ai_title": "Recherche alimentée par IA",
+    "ai_desc": "Des algorithmes intelligents comprennent vos préférences et trouvent le bien idéal pour votre maison de rêve",
+
+    "easy_title": "Réservation facile",
+    "easy_desc": "Planifiez des visites de biens en un seul clic, sans tracas ni procédures compliquées",
+
+    "verified_title": "Biens vérifiés",
+    "verified_desc": "Toutes les annonces sont vérifiées par notre équipe d'experts pour votre tranquillité d'esprit"
+  },
+
+  "footer": {
+    "about": "À propos",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "contact": "Contact",
+    "rights": "© 2025 Daryol. Tous droits réservés."
+  }
+}

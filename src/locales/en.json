@@ -1,0 +1,41 @@
+{
+  "brand": {
+    "logo": "Daryol Logo",
+    "name": "Daryol",
+    "powered": "Powered by Artificial Intelligence"
+  },
+
+  "search": {
+    "placeholder": "Ex: 2 bedrooms, 1 living room, Gauthier district",
+    "search": "Search",
+    "around_me": "Around me",
+    "disabled": "Disabled",
+    "title": "Find your home with AI-powered search"
+  },
+
+  "filters": {
+    "bedroom_1": "1 Bedroom",
+    "maarif": "Maarif",
+    "less_5000": "Less than 5000 DH",
+    "more_200": "More than 200 square meters"
+  },
+
+  "features": {
+    "ai_title": "AI-Powered Search",
+    "ai_desc": "Smart algorithms understand your preferences and find the perfect match for your dream home",
+
+    "easy_title": "Easy Booking",
+    "easy_desc": "Schedule property visits with just one click, no hassle or complicated procedures",
+
+    "verified_title": "Verified Properties",
+    "verified_desc": "All listings are verified by our expert team for your complete peace of mind"
+  },
+
+  "footer": {
+    "about": "About",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact",
+    "rights": "© 2025 Daryol. All rights reserved."
+  }
+}

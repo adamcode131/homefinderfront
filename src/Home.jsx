@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function Home() {
   const [query, setQuery] = useState('');   
@@ -10,7 +11,16 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [location, setLocation] = useState({ latitude: null, longitude: null });
   const [autourDeMoi, setAutourDeMoi] = useState(false);
+  const [changingLanguage, setChangingLanguage] = useState(false);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  // Handle language change
+  const handleLanguageChange = async (language) => {
+    setChangingLanguage(true);
+    await i18n.changeLanguage(language);
+    setChangingLanguage(false);
+  };
 
   // geoLocation added
   useEffect(() => {
@@ -129,7 +139,7 @@ export default function Home() {
   const LogoIcon = ({ className = "w-6 h-6" }) => (
     <img 
       src="./logo.svg" 
-      alt="Daryol Logo" 
+      alt={t("brand.logo")}
       className={className}
       onError={(e) => {
         // Fallback to home icon if image fails to load
@@ -152,7 +162,7 @@ export default function Home() {
         <div className="flex items-center group">
             <LogoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
           <span className="ml-2 sm:ml-3 text-xl sm:text-2xl font-semibold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-            Daryol
+            {t("brand.name")}
           </span>
         </div>
 
@@ -160,11 +170,21 @@ export default function Home() {
         <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
           {/* Language Selector (compact on mobile, original size on sm+) */}
           <div className="relative">
-            <select className="bg-white/90 border border-slate-300 rounded-xl px-2 py-1 text-xs sm:px-4 sm:py-2.5 sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md">
+            <select 
+              value={i18n.language}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              disabled={changingLanguage}
+              className="bg-white/90 border border-slate-300 rounded-xl px-2 py-1 text-xs sm:px-4 sm:py-2.5 sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
               <option value="fr">🇫🇷 FR</option>
               <option value="en">🇺🇸 EN</option>
               <option value="ar">🇲🇦 AR</option>
             </select>
+            {changingLanguage && (
+              <div className="absolute inset-0 bg-white/50 rounded-xl flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
           </div>
 
           {/* Owner Section */}
@@ -190,14 +210,14 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-  <main id="main-content" className="flex flex-col items-center justify-center px-4 sm:px-8 py-16 sm:py-24">
+      <main id="main-content" className="flex flex-col items-center justify-center px-4 sm:px-8 py-16 sm:py-24">
         {/* Hero Logo Section */}
-  <div className="mb-8 sm:mb-12 text-center">
+        <div className="mb-8 sm:mb-12 text-center">
           <div className="flex items-center justify-center mb-6">
               <LogoIcon className="w-16 h-16 sm:w-20 sm:h-20" />
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">Daryol</h1>
-          <p className="text-slate-500 text-sm sm:text-lg font-light">Powered by Artificial Intelligence</p>
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">{t("brand.name")}</h1>
+          <p className="text-slate-500 text-sm sm:text-lg font-light">{t("brand.powered")}</p>
         </div>
 
         {/* Search Section */}
@@ -214,14 +234,23 @@ export default function Home() {
                   onBlur={handleInputBlur}
                   value={query}
                   type="text" 
-                  placeholder="Ex: 2 chambres, 1 salon, quartier Gauthier" 
+                  placeholder={t("search.placeholder")}
                   className="flex-1 py-3 px-3 sm:px-6 text-sm sm:text-base text-slate-700 bg-transparent focus:outline-none placeholder-slate-400 font-light" 
                 />
                 <button 
                   onClick={() => handleSearch(query)} 
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium text-sm sm:text-base"
+                  disabled={isSearching}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-xl mr-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  <i className="fa-solid fa-search mr-2"></i>Search
+                  <i className="fa-solid fa-search mr-2"></i>
+                  {isSearching ? (
+                    <span className="flex items-center">
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      {t("search.search")}...
+                    </span>
+                  ) : (
+                    t("search.search")
+                  )}
                 </button>
             </div>
             
@@ -262,7 +291,7 @@ export default function Home() {
           {/* Autour de Moi Toggle */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl px-4 py-2 sm:px-6 sm:py-3 shadow-lg hover:shadow-xl transition-all duration-200">
-              <span className="text-slate-700 font-medium text-sm">Autour de moi</span>
+              <span className="text-slate-700 font-medium text-sm">{t("search.around_me")}</span>
               <button 
                 onClick={toggleAutourDeMoi}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
@@ -277,29 +306,29 @@ export default function Home() {
               </button>
               <div className="flex items-center text-slate-500 text-sm">
                 <i className="fa-solid fa-location-crosshairs mr-2 text-blue-500"></i>
-                {autourDeMoi ? 'Activé (50km)' : 'Désactivé'}
+                {autourDeMoi ? t("search.around_me") + ' (50km)' : t("search.disabled")}
               </div>
             </div>
           </div>
 
           {/* Tagline */}
           <p className="text-center text-slate-600 text-base sm:text-xl mb-12 font-light">
-            Find your home with <span className="font-medium text-blue-600">AI-powered search</span>
+            {t("search.title")}
           </p>
           
           {/* Quick Suggestions */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
             <button onClick={() => handleSearch("1 Chambre")} className="suggestion-pulse bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-blue-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-bed mr-2 text-blue-500"></i>1 Chambre
+              <i className="fa-solid fa-bed mr-2 text-blue-500"></i>{t("filters.bedroom_1")}
             </button>
             <button onClick={() => handleSearch("Maarif")} className="suggestion-pulse bg-white hover:bg-green-50 text-slate-700 hover:text-green-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-green-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-location-dot mr-2 text-green-500"></i>Maarif
+              <i className="fa-solid fa-location-dot mr-2 text-green-500"></i>{t("filters.maarif")}
             </button>
             <button onClick={() => handleSearch("moins de 5000dh")} className="suggestion-pulse bg-white hover:bg-yellow-50 text-slate-700 hover:text-yellow-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-yellow-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-coins mr-2 text-yellow-500"></i>Moins de 5000 DH
+              <i className="fa-solid fa-coins mr-2 text-yellow-500"></i>{t("filters.less_5000")}
             </button>
             <button onClick={() => handleSearch("plus de 200metre")} className="suggestion-pulse bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl text-sm border-2 border-slate-200 hover:border-purple-300 transition-all duration-200 shadow-md hover:shadow-lg">
-              <i className="fa-solid fa-car mr-2 text-purple-500"></i>Plus de 200 métre carré
+              <i className="fa-solid fa-car mr-2 text-purple-500"></i>{t("filters.more_200")}
             </button>
           </div>
         </div>
@@ -312,24 +341,26 @@ export default function Home() {
               <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <i className="fa-solid fa-brain text-blue-600 text-2xl"></i>
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-3">AI-Powered Search</h3>
-              <p className="text-slate-600 text-base leading-relaxed">Smart algorithms understand your preferences and find the perfect match for your dream home</p>
+              <h3 className="text-xl font-semibold text-slate-800 mb-3">{t("features.ai_title")}</h3>
+              <p className="text-slate-600 text-base leading-relaxed">{t("features.ai_desc")}</p>
             </div>
             {/* Easy Booking */}
             <div className="feature-card text-center p-8 bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100">
               <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <i className="fa-solid fa-calendar-check text-green-600 text-2xl"></i>
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-3">Easy Booking</h3>
-              <p className="text-slate-600 text-base leading-relaxed">Schedule property visits with just one click, no hassle or complicated procedures</p>
+              <h3 className="text-xl font-semibold text-slate-800 mb-3">{t("features.easy_title")}</h3>
+              <p className="text-slate-600 text-base leading-relaxed">{t("features.easy_desc")}</p>
             </div>
             {/* Verified Properties */}
             <div className="feature-card text-center p-8 bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100">
               <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <i className="fa-solid fa-shield-check text-emerald-600 text-2xl"></i>
+                <svg className="w-8 h-8 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
               </div>
-              <h3 className="text-xl font-semibold text-slate-800 mb-3">Verified Properties</h3>
-              <p className="text-slate-600 text-base leading-relaxed">All listings are verified by our expert team for your complete peace of mind</p>
+              <h3 className="text-xl font-semibold text-slate-800 mb-3">{t("features.verified_title")}</h3>
+              <p className="text-slate-600 text-base leading-relaxed">{t("features.verified_desc")}</p>
             </div>
           </div>
         </div>
@@ -343,16 +374,16 @@ export default function Home() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
                 <LogoIcon className="w-4 h-4" />
               </div>
-              <span className="text-xl font-semibold text-slate-800">Daryol</span>
+              <span className="text-xl font-semibold text-slate-800">{t("brand.name")}</span>
             </div>
             <div className="flex items-center space-x-8 text-sm text-slate-600 mb-6 md:mb-0">
-              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">About</span>
-              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">Privacy</span>
-              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">Terms</span>
-              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">Contact</span>
+              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">{t("footer.about")}</span>
+              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">{t("footer.privacy")}</span>
+              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">{t("footer.terms")}</span>
+              <span className="hover:text-blue-600 transition-colors cursor-pointer font-medium">{t("footer.contact")}</span>
             </div>
             <div className="text-sm text-slate-500 font-light">
-              © 2025 Daryol. All rights reserved.
+              {t("footer.rights")}
             </div>
           </div>
         </div>
